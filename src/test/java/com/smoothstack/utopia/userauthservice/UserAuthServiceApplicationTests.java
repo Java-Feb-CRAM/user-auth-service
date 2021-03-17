@@ -1,4 +1,4 @@
-package com.utopia.smoothstack.userauthservice;
+package com.smoothstack.utopia.userauthservice;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
