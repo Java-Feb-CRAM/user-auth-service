@@ -54,7 +54,7 @@ public class JwtTokenFilter extends OncePerRequestFilter {
             throw new UsernameNotFoundException("Invalid username: " + jwtTokenUtil.getUsername(token));
         }
         
-        UserPrincipal userDetails = new UserPrincipal(user, 
+        UserPrincipal userDetails = new UserPrincipal(user.getUsername(), user.getPassword(), 
                 user.getUserRole().getName());
         
         UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(

@@ -11,23 +11,26 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import com.smoothstack.utopia.shared.model.User;
+import lombok.Getter;
 /**
  * @author Craig Saunders
  *
  */
+@Getter
 public class UserPrincipal implements UserDetails {
     
     /**
      * 
      */
     private static final long serialVersionUID = 7490163486050209257L;
-    private User user;
+    private String username;
+    private String password;
     private String userRole;
     
-    public UserPrincipal(User user, String userRole)
+    public UserPrincipal(String username, String password, String userRole)
     {
-        this.user = user;
+        this.username = username;
+        this.password = userRole;
         this.userRole = userRole;
     }
     
@@ -45,18 +48,6 @@ public class UserPrincipal implements UserDetails {
             grantedAuthorities.add(new SimpleGrantedAuthority("ROLE_USER"));
         }        
         return grantedAuthorities;
-    }
-
-    @Override
-    public String getPassword()
-    {
-        return this.user.getPassword();
-    }
-
-    @Override
-    public String getUsername()
-    {
-        return this.user.getUsername();
     }
 
     @Override

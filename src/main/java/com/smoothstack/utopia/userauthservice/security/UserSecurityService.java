@@ -3,7 +3,7 @@
  */
 package com.smoothstack.utopia.userauthservice.security;
 
-import java.util.Calendar;
+import java.time.LocalDateTime;
 
 import javax.transaction.Transactional;
 
@@ -38,7 +38,6 @@ public class UserSecurityService implements ISecurityUserService {
     }
 
     private boolean isTokenExpired(PasswordResetToken passToken) {
-        final Calendar cal = Calendar.getInstance();
-        return passToken.getExpiryDate().before(cal.getTime());
+        return passToken.getExpiryDate().isBefore(LocalDateTime.now());
     }
 }

@@ -7,6 +7,9 @@ import org.springframework.context.ApplicationEvent;
 
 import com.smoothstack.utopia.shared.model.User;
 
+import lombok.Getter;
+
+@Getter
 public class OnRegistrationCompleteEvent extends ApplicationEvent {
 
     /**
@@ -21,13 +24,4 @@ public class OnRegistrationCompleteEvent extends ApplicationEvent {
         this.user = user;
         this.appUrl = appUrl;
     }
-
-    public String getAppUrl() {
-        return appUrl;
-    }
-    
-    public User getUser() {
-        return user;
-    }
-
 }

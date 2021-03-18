@@ -4,11 +4,8 @@
 package com.smoothstack.utopia.userauthservice.web.dto;
 
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
-
-import com.smoothstack.utopia.userauthservice.validation.ValidEmail;
-import com.smoothstack.utopia.userauthservice.validation.ValidPassword;
-import com.smoothstack.utopia.userauthservice.validation.ValidUsername;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -23,7 +20,7 @@ import lombok.ToString;
 @ToString
 public class UserDTO {    
     @NotNull
-    @ValidUsername
+    @Pattern(regexp = "[a-zA-Z]+")
     @Size(min = 8, max = 32, message = "{Size.userDto.username}")
     private String username;
     
@@ -32,7 +29,7 @@ public class UserDTO {
     private String phone;
 
     @NotNull
-    @ValidEmail
+    @Pattern(regexp = "^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@" + "[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$")
     @Size(min = 6, max = 128, message = "{Size.userDto.email}")
     private String email;
     
@@ -45,7 +42,8 @@ public class UserDTO {
     private String givenName;
 
     @NotNull
-    @ValidPassword
+    @Pattern(regexp = "^(?:(?=.*[a-z])(?:(?=.*[A-Z])(?=.*[\\d\\W])|(?=.*\\W)(?=.*\\d))|(?=.*\\W)(?=.*[A-Z])(?=.*\\d)).$")
+    @Size(min = 8, max = 32, message = "Password must be between 8 to 32 characters")
     private String password;
     
     @NotNull

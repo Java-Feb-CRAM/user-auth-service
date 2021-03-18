@@ -3,7 +3,7 @@
  */
 package com.smoothstack.utopia.userauthservice.service;
 
-import java.util.Calendar;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -33,7 +33,7 @@ import com.smoothstack.utopia.userauthservice.web.error.UserAlreadyExistExceptio
  */
 @Service
 @Transactional
-public class UserService implements IUserService{
+public class UserService{
     @Autowired
     private UserRepository userRepository;
     @Autowired
@@ -83,7 +83,6 @@ public class UserService implements IUserService{
         }
     }
 
-    @Override
     public User getUser(final String verificationToken)
     {
         VerificationToken token = verificationTokenRepository.findByToken(verificationToken);
@@ -93,13 +92,11 @@ public class UserService implements IUserService{
         return null;
     }
 
-    @Override
     public void saveRegisteredUser(final User user)
     {
         userRepository.save(user);
     }
 
-    @Override
     public void deleteUser(final User user)
     {
         if (verificationTokenRepository.existsByUser(user)) {
@@ -111,13 +108,11 @@ public class UserService implements IUserService{
         userRepository.delete(user);
     }
 
-    @Override
     public void createVerificationTokenForUser(final User user, final String token)
     {
         verificationTokenRepository.save(new VerificationToken(token, user));        
     }
 
-    @Override
     public VerificationToken generateNewVerificationToken(final String verificationToken)
     {        
         VerificationToken token = verificationTokenRepository.findByToken(verificationToken);
@@ -127,26 +122,22 @@ public class UserService implements IUserService{
         return token;
     }
 
-    @Override
     public void createPasswordResetTokenForUser(final User user, final String token)
     {        
         passwordResetTokenRepository.save(new PasswordResetToken(token, user));        
     }
 
-    @Override
     public User getUserByPasswordResetToken(final String token)
     {
         return passwordResetTokenRepository.findByToken(token).getUser();
     }
 
-    @Override
     public void changeUserPassword(final User user, final String password)
     {
         user.setPassword(passwordEncoder.encode(password));
         userRepository.save(user);
     }
 
-    @Override
     public String validateVerificationToken(String token)
     {
         final VerificationToken verificationToken = verificationTokenRepository.findByToken(token);
@@ -155,10 +146,7 @@ public class UserService implements IUserService{
         }
 
         final User user = verificationToken.getUser();
-        final Calendar cal = Calendar.getInstance();
-        if ((verificationToken.getExpiryDate()
-            .getTime() - cal.getTime()
-            .getTime()) <= 0) {
+        if ((verificationToken.getExpiryDate().isBefore(LocalDateTime.now()))) {
             verificationTokenRepository.delete(verificationToken);
             return TOKEN_EXPIRED;
         }
@@ -167,7 +155,6 @@ public class UserService implements IUserService{
         return TOKEN_VALID;
     }
 
-    @Override
     public List<String> getUsersFromSessionRegistry()
     {
         return sessionRegistry.getAllPrincipals()
@@ -177,7 +164,6 @@ public class UserService implements IUserService{
                 .collect(Collectors.toList());
     }
 
-    @Override
     public User findUserByEmail(String email)
     {
         return userRepository.findByEmail(email);

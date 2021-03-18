@@ -24,7 +24,7 @@ import com.smoothstack.utopia.shared.model.User;
 import com.smoothstack.utopia.shared.model.VerificationToken;
 import com.smoothstack.utopia.userauthservice.registration.OnRegistrationCompleteEvent;
 import com.smoothstack.utopia.userauthservice.security.ISecurityUserService;
-import com.smoothstack.utopia.userauthservice.service.IUserService;
+import com.smoothstack.utopia.userauthservice.service.UserService;
 import com.smoothstack.utopia.userauthservice.web.dto.PasswordDTO;
 import com.smoothstack.utopia.userauthservice.web.dto.UserDTO;
 import com.smoothstack.utopia.userauthservice.web.util.GenericResponse;
@@ -36,7 +36,7 @@ import com.smoothstack.utopia.userauthservice.web.util.GenericResponse;
 @RestController
 public class RegistrationRestController {
     @Autowired
-    private IUserService userService;
+    private UserService userService;
     @Autowired
     private ApplicationEventPublisher eventPublisher;
     @Autowired
