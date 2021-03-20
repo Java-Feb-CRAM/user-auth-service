@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.smoothstack.utopia.userauthservice.web.error;
+package com.smoothstack.utopia.userauthservice.registration.error;
 
 public final class UnmatchedPasswordException extends RuntimeException {
 

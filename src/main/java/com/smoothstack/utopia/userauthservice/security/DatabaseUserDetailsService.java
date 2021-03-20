@@ -3,8 +3,6 @@
  */
 package com.smoothstack.utopia.userauthservice.security;
 
-import java.util.Optional;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -27,7 +25,7 @@ public class DatabaseUserDetailsService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException
     {
-        User user = Optional.ofNullable(userRepository.findByUsername(username)).orElseThrow(() -> new UsernameNotFoundException(username));     
+        User user = userRepository.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException(username));     
         return new UserPrincipal(user.getUsername(), user.getPassword(), user.getUserRole().getName());
     }
 }

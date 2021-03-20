@@ -1,14 +1,14 @@
 /**
  * 
  */
-package com.smoothstack.utopia.userauthservice.web.error;
+package com.smoothstack.utopia.userauthservice.registration.error;
 
 public final class InvalidRoleException extends RuntimeException {
 
     /**
      * 
      */
-    private static final long serialVersionUID = -7082839605779336103L;
+    private static final long serialVersionUID = 1L;
 
     public InvalidRoleException() {
         super();

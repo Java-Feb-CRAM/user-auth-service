@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.smoothstack.utopia.userauthservice.web.util;
+package com.smoothstack.utopia.userauthservice.registration.util;
 
 import java.util.List;
 import java.util.stream.Collectors;

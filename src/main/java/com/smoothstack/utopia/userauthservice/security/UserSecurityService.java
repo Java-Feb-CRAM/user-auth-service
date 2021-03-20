@@ -11,7 +11,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.smoothstack.utopia.shared.model.PasswordResetToken;
+import com.smoothstack.utopia.shared.model.VerificationToken;
 import com.smoothstack.utopia.userauthservice.dao.PasswordResetTokenRepository;
+import com.smoothstack.utopia.userauthservice.dao.VerificationTokenRepository;
 
 /**
  * @author Craig Saunders
@@ -19,25 +21,52 @@ import com.smoothstack.utopia.userauthservice.dao.PasswordResetTokenRepository;
  */
 @Service
 @Transactional
-public class UserSecurityService implements ISecurityUserService {
+public class UserSecurityService {
 
     @Autowired
     private PasswordResetTokenRepository passwordResetTokenRepository;
+    
+    @Autowired
+    private VerificationTokenRepository verificationTokenRepository;
 
-    @Override
-    public String validatePasswordResetToken(String token) {
-        final PasswordResetToken passToken = passwordResetTokenRepository.findByToken(token);
-
-        return !isTokenFound(passToken) ? "invalidToken"
-                : isTokenExpired(passToken) ? "expired"
-                : null;
+    public enum TokenStatus {
+        INVALID,
+        VALID,
+        EXPIRED
     }
-
-    private boolean isTokenFound(PasswordResetToken passToken) {
-        return passToken != null;
+    
+    public TokenStatus validatePasswordResetToken(String token) {
+        
+        final PasswordResetToken resetToken = passwordResetTokenRepository.findByToken(token).get();
+        if (resetToken == null) {
+            return TokenStatus.INVALID;
+        }
+        
+        if ((resetToken.getExpiryDate().isBefore(LocalDateTime.now()))) {
+            passwordResetTokenRepository.delete(resetToken);
+            return TokenStatus.EXPIRED;
+        }
+        
+        return TokenStatus.VALID;
     }
-
-    private boolean isTokenExpired(PasswordResetToken passToken) {
-        return passToken.getExpiryDate().isBefore(LocalDateTime.now());
+    
+    public TokenStatus validateVerificationToken(String token)
+    {
+        return null;
+    }
+    
+    private TokenStatus validate(String token, Class tokenClass, Object repositoryClass)
+    {
+        final VerificationToken verificationToken = verificationTokenRepository.findByToken(token).get();
+        if (verificationToken == null) {
+            return TokenStatus.INVALID;
+        }
+        
+        if ((verificationToken.getExpiryDate().isBefore(LocalDateTime.now()))) {
+            verificationTokenRepository.delete(verificationToken);
+            return TokenStatus.EXPIRED;
+        }
+        
+        return TokenStatus.VALID;
     }
 }

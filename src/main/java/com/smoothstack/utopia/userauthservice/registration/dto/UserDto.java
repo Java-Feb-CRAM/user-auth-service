@@ -1,8 +1,9 @@
 /**
  * 
  */
-package com.smoothstack.utopia.userauthservice.web.dto;
+package com.smoothstack.utopia.userauthservice.registration.dto;
 
+import javax.validation.constraints.Email;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
@@ -18,7 +19,7 @@ import lombok.ToString;
 @Getter
 @Setter
 @ToString
-public class UserDTO {    
+public class UserDto {    
     @NotNull
     @Pattern(regexp = "[a-zA-Z]+")
     @Size(min = 8, max = 32, message = "{Size.userDto.username}")
@@ -29,7 +30,7 @@ public class UserDTO {
     private String phone;
 
     @NotNull
-    @Pattern(regexp = "^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@" + "[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$")
+    @Email
     @Size(min = 6, max = 128, message = "{Size.userDto.email}")
     private String email;
     

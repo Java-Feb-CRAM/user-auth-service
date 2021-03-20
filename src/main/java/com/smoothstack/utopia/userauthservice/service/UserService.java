@@ -22,10 +22,13 @@ import com.smoothstack.utopia.userauthservice.dao.PasswordResetTokenRepository;
 import com.smoothstack.utopia.userauthservice.dao.UserRepository;
 import com.smoothstack.utopia.userauthservice.dao.UserRoleRepository;
 import com.smoothstack.utopia.userauthservice.dao.VerificationTokenRepository;
-import com.smoothstack.utopia.userauthservice.web.dto.UserDTO;
-import com.smoothstack.utopia.userauthservice.web.error.InvalidRoleException;
-import com.smoothstack.utopia.userauthservice.web.error.UnmatchedPasswordException;
-import com.smoothstack.utopia.userauthservice.web.error.UserAlreadyExistException;
+import com.smoothstack.utopia.userauthservice.registration.dto.UserDto;
+import com.smoothstack.utopia.userauthservice.registration.error.InvalidJsonRequestException;
+import com.smoothstack.utopia.userauthservice.registration.error.InvalidRoleException;
+import com.smoothstack.utopia.userauthservice.registration.error.NullTokenException;
+import com.smoothstack.utopia.userauthservice.registration.error.UnmatchedPasswordException;
+import com.smoothstack.utopia.userauthservice.registration.error.UserAlreadyExistException;
+import com.smoothstack.utopia.userauthservice.security.UserSecurityService;
 
 /**
  * @author Craig Saunders
@@ -46,36 +49,29 @@ public class UserService{
     private PasswordEncoder passwordEncoder;   
     @Autowired
     private SessionRegistry sessionRegistry; 
+    @Autowired
+    private UserSecurityService userSecurityService;
     
-    public static final String TOKEN_INVALID = "invalidToken";
-    public static final String TOKEN_EXPIRED = "expired";
-    public static final String TOKEN_VALID = "valid";
-    
-    public User registerNewUserAccount(final UserDTO userDTO) throws UserAlreadyExistException {
-        if (userRepository.existsByUsername(userDTO.getUsername())) {
-            throw new UserAlreadyExistException("There is an account with that username: " + userDTO.getUsername());
+    public User registerNewUserAccount(UserDto userDTO) throws UserAlreadyExistException, InvalidRoleException, UnmatchedPasswordException {
+        if (!userRepository.findByUsername(userDTO.getUsername()).isEmpty()) {
+            throw new UserAlreadyExistException("An account already exists with that username: " + userDTO.getUsername());
         }
-        if (userRepository.existsByEmail(userDTO.getEmail())) {
-            throw new UserAlreadyExistException("There is an account with that email address: " + userDTO.getEmail());
+        if (!userRepository.findByEmail(userDTO.getEmail()).isEmpty()) {
+            throw new UserAlreadyExistException("An account already exists with that email address: " + userDTO.getEmail());
         }
+        
         if(userDTO.getPassword().equals(userDTO.getMatchingPassword()))
         {
-            if (userRoleRepository.existsByName(userDTO.getRole()))
-            {
-                final User user = new User();
-                user.setGivenName(userDTO.getGivenName());
-                user.setFamilyName(userDTO.getFamilyName());
-                user.setUsername(userDTO.getUsername());
-                user.setPassword(passwordEncoder.encode(userDTO.getPassword()));
-                user.setEmail(userDTO.getEmail());
-                user.setPhone(userDTO.getPhone());
-                user.setUserRole(userRoleRepository.findByName(userDTO.getRole()));
-                return userRepository.save(new User());
-            }
-            else
-            {
-                throw new InvalidRoleException("The role given does not exist: " + userDTO.getRole());
-            }
+            User user = new User();
+            user.setGivenName(userDTO.getGivenName());
+            user.setFamilyName(userDTO.getFamilyName());
+            user.setUsername(userDTO.getUsername());
+            user.setPassword(passwordEncoder.encode(userDTO.getPassword()));
+            user.setEmail(userDTO.getEmail());
+            user.setPhone(userDTO.getPhone());
+            user.setUserRole(userRoleRepository.findByName(userDTO.getRole())
+                    .orElseThrow(() -> new InvalidRoleException("The role given does not exist: " + userDTO.getRole())));
+            return userRepository.save(new User());
         }
         else
         {
@@ -83,76 +79,61 @@ public class UserService{
         }
     }
 
-    public User getUser(final String verificationToken)
+    public User getUser(String verificationToken) throws NullTokenException
     {
-        VerificationToken token = verificationTokenRepository.findByToken(verificationToken);
-        if (token != null) {
-            return token.getUser();
-        }
-        return null;
+        VerificationToken token = verificationTokenRepository.findByToken(verificationToken).orElseThrow(NullTokenException::new);
+        return token.getUser();
     }
 
-    public void saveRegisteredUser(final User user)
+    public void saveRegisteredUser(User user)
     {
         userRepository.save(user);
     }
 
-    public void deleteUser(final User user)
+    public void deleteUser(User user)
     {
         if (verificationTokenRepository.existsByUser(user)) {
-            verificationTokenRepository.delete(verificationTokenRepository.findByUser(user));
+            verificationTokenRepository.delete(verificationTokenRepository.findByUser(user).get());
         }
         if (passwordResetTokenRepository.existsByUser(user)) {
-            passwordResetTokenRepository.delete(passwordResetTokenRepository.findByUser(user));
+            passwordResetTokenRepository.delete(passwordResetTokenRepository.findByUser(user).get());
         }
         userRepository.delete(user);
     }
 
-    public void createVerificationTokenForUser(final User user, final String token)
+    public void createVerificationTokenForUser(User user, String token)
     {
         verificationTokenRepository.save(new VerificationToken(token, user));        
     }
 
-    public VerificationToken generateNewVerificationToken(final String verificationToken)
+    /**
+     * @param verificationToken
+     * @return
+     * @throws NullPointerException
+     */
+    public VerificationToken generateNewVerificationToken(String verificationToken) throws NullTokenException
     {        
-        VerificationToken token = verificationTokenRepository.findByToken(verificationToken);
-        token.updateToken(UUID.randomUUID()
-            .toString());
-        token = verificationTokenRepository.save(token);
-        return token;
+        VerificationToken vToken = verificationTokenRepository.findByToken(verificationToken).orElseThrow(NullTokenException::new);   
+        vToken.updateToken(UUID.randomUUID().toString());
+        verificationTokenRepository.save(vToken);
+        
+        return verificationTokenRepository.findByToken(verificationToken).orElseThrow(NullTokenException::new);
     }
 
-    public void createPasswordResetTokenForUser(final User user, final String token)
+    public void createPasswordResetTokenForUser(User user, String token)
     {        
         passwordResetTokenRepository.save(new PasswordResetToken(token, user));        
     }
 
-    public User getUserByPasswordResetToken(final String token)
+    public User getUserByPasswordResetToken(String token)
     {
-        return passwordResetTokenRepository.findByToken(token).getUser();
+        
     }
 
-    public void changeUserPassword(final User user, final String password)
+    public void changeUserPassword(User user, String password)
     {
         user.setPassword(passwordEncoder.encode(password));
         userRepository.save(user);
-    }
-
-    public String validateVerificationToken(String token)
-    {
-        final VerificationToken verificationToken = verificationTokenRepository.findByToken(token);
-        if (verificationToken == null) {
-            return TOKEN_INVALID;
-        }
-
-        final User user = verificationToken.getUser();
-        if ((verificationToken.getExpiryDate().isBefore(LocalDateTime.now()))) {
-            verificationTokenRepository.delete(verificationToken);
-            return TOKEN_EXPIRED;
-        }
-        
-        userRepository.save(user);
-        return TOKEN_VALID;
     }
 
     public List<String> getUsersFromSessionRegistry()
@@ -164,8 +145,8 @@ public class UserService{
                 .collect(Collectors.toList());
     }
 
-    public User findUserByEmail(String email)
+    public User findUserByEmail(String email) throws InvalidJsonRequestException
     {
-        return userRepository.findByEmail(email);
+        return userRepository.findByEmail(email).orElseThrow(InvalidJsonRequestException::new);
     }
 }
