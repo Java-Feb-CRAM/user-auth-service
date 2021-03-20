@@ -30,7 +30,7 @@ public class UserPrincipal implements UserDetails {
     public UserPrincipal(String username, String password, String userRole)
     {
         this.username = username;
-        this.password = userRole;
+        this.password = password;
         this.userRole = userRole;
     }
     

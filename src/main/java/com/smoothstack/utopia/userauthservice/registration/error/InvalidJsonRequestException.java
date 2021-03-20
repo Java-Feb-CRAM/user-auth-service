@@ -3,27 +3,11 @@
  */
 package com.smoothstack.utopia.userauthservice.registration.error;
 
-public final class InvalidJsonRequestException extends RuntimeException {
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.http.HttpStatus;
 
-    /**
-     * 
-     */
-    private static final long serialVersionUID = -7082839605779336103L;
-
-    public InvalidJsonRequestException() {
-        super();
-    }
-
-    public InvalidJsonRequestException(final String message, final Throwable cause) {
-        super(message, cause);
-    }
-
-    public InvalidJsonRequestException(final String message) {
-        super(message);
-    }
-
-    public InvalidJsonRequestException(final Throwable cause) {
-        super(cause);
-    }
-
-}
+@ResponseStatus(
+        value = HttpStatus.BAD_REQUEST,
+        reason = "Invalid Json format or request"
+      )
+public final class InvalidJsonRequestException extends RuntimeException { private static final long serialVersionUID = 1L; }

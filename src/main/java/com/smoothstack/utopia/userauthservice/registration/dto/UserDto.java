@@ -19,7 +19,7 @@ import lombok.ToString;
 @Getter
 @Setter
 @ToString
-public class UserDto {    
+public class UserDto implements UserFields{    
     @NotNull
     @Pattern(regexp = "[a-zA-Z]+")
     @Size(min = 8, max = 32, message = "{Size.userDto.username}")

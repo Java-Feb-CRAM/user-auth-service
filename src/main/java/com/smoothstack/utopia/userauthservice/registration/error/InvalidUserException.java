@@ -6,8 +6,12 @@ package com.smoothstack.utopia.userauthservice.registration.error;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
+/**
+ * @author Craig Saunders
+ *
+ */
 @ResponseStatus(
         value = HttpStatus.BAD_REQUEST,
-        reason = "Invalid or null user role"
+        reason = "Invalid username or no user provided"
       )
-public final class InvalidRoleException extends RuntimeException { private static final long serialVersionUID = 1L; }
+public class InvalidUserException extends RuntimeException { private static final long serialVersionUID = 1L; }

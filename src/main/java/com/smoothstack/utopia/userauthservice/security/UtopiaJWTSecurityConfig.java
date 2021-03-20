@@ -34,14 +34,15 @@ public class UtopiaJWTSecurityConfig extends WebSecurityConfigurerAdapter {
     
     @Override
     protected void configure(HttpSecurity http) throws Exception {        
-        http.cors().and().csrf().disable() // use cors not csrf
+        http // use cors not csrf
                 //.sessionManagement()
                 //.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 //.and()
-                .addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class)
+                //.addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class)
                 .authorizeRequests()
                     .antMatchers("/api/admin/**").hasRole("ADMIN")
                     .antMatchers("/api/user/**").hasAnyRole("ADMIN", "AGENT", "USER")
+                    .antMatchers("/password-reset/**").hasAnyRole("ADMIN", "AGENT", "USER")
                     .antMatchers("/api/employee/**").hasAnyRole("ADMIN", "AGENT")
                     .antMatchers("/api/public/**").permitAll()
                     .antMatchers("/api/logout").permitAll()
@@ -89,6 +90,6 @@ public class UtopiaJWTSecurityConfig extends WebSecurityConfigurerAdapter {
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
-    }
+    }   
 }
 

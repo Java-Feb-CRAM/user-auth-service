@@ -18,14 +18,13 @@ import com.smoothstack.utopia.userauthservice.dao.UserRepository;
  */
 @Service
 public class DatabaseUserDetailsService implements UserDetailsService {
-
     @Autowired
     private UserRepository userRepository;
     
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException
     {
-        User user = userRepository.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException(username));     
+        User user = userRepository.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException(username));    
         return new UserPrincipal(user.getUsername(), user.getPassword(), user.getUserRole().getName());
     }
 }
