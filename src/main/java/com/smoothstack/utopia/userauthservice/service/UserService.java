@@ -43,7 +43,7 @@ public class UserService {
     @Autowired
     private PasswordResetTokenRepository passwordResetTokenRepository;
     @Autowired
-    private PasswordEncoder passwordEncoder;   
+    private PasswordEncoder passwordEncoder;
     
     public boolean validatePasswordResetToken(String token) throws InvalidTokenException {
         
@@ -52,7 +52,6 @@ public class UserService {
             passwordResetTokenRepository.delete(resetToken);
             return false;
         }
-        passwordResetTokenRepository.delete(resetToken);
         return true;
     }
     
@@ -119,12 +118,16 @@ public class UserService {
     public void createVerificationTokenForUser(String token, String username) throws InvalidUserException
     {        
         User user = userRepository.findByUsername(username).orElseThrow(InvalidUserException::new);
+        
+        verificationTokenRepository.findByToken(token).ifPresent(t -> verificationTokenRepository.delete(t));        
         verificationTokenRepository.save(new VerificationToken(token, user));        
     }
     
-    public void createPasswordResetTokenForUser(String username, String token) throws InvalidUserException
+    public void createPasswordResetTokenForUser(String token, String username) throws InvalidUserException
     {        
         User user = userRepository.findByUsername(username).orElseThrow(InvalidUserException::new);
+        
+        passwordResetTokenRepository.findAllByUser(user).stream().forEach(t -> passwordResetTokenRepository.delete(t));
         passwordResetTokenRepository.save(new PasswordResetToken(token, user));        
     }
 

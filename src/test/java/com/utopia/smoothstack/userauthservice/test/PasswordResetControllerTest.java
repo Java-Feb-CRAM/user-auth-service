@@ -3,6 +3,7 @@
  */
 package com.utopia.smoothstack.userauthservice.test;
 
+/*
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import javax.validation.Valid;
@@ -20,11 +21,11 @@ import com.smoothstack.utopia.userauthservice.registration.dto.UserFields;
 /**
  * @author Craig Saunders
  *
- */
+ *
 class PasswordResetControllerTest {    
     /**
      * @throws java.lang.Exception
-     */
+     *
     @BeforeEach
     void setUp() throws Exception
     {
@@ -40,3 +41,4 @@ class PasswordResetControllerTest {
     }
 
 }
+*/

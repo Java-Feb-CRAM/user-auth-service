@@ -1,6 +1,9 @@
 /**
  * 
  */
+/**
+ * 
+ */
 package com.smoothstack.utopia.userauthservice.security;
 
 import io.jsonwebtoken.Claims;
@@ -35,7 +38,7 @@ public class JwtTokenUtil {
                 .setSubject(format("%s,%s", user.getId(), user.getUsername()))
                 .setIssuer(jwtIssuer)
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + ONE_WEEK_MILLISECONDS))
+                .setExpiration(new Date(System.currentTimeMillis() + ONE_WEEK_MILLISECONDS)) // 1 week
                 .signWith(SignatureAlgorithm.HS512, jwtSecret)
                 .compact();
     }

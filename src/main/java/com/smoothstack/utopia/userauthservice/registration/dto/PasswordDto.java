@@ -18,7 +18,7 @@ import lombok.ToString;
 @Getter
 @Setter
 @ToString
-public class PasswordDto {
+public class PasswordDto implements PasswordFields {
 
     @NotNull
     private  String token;

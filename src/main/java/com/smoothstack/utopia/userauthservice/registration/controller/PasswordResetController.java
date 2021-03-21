@@ -9,23 +9,17 @@ import javax.validation.Valid;
 import javax.validation.constraints.Pattern;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.mail.MailSender;
-import org.springframework.mail.SimpleMailMessage;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.smoothstack.utopia.shared.model.User;
 import com.smoothstack.utopia.userauthservice.registration.dto.PasswordDto;
-import com.smoothstack.utopia.userauthservice.registration.dto.UserDto;
-import com.smoothstack.utopia.userauthservice.registration.dto.UserFields;
+import com.smoothstack.utopia.userauthservice.registration.dto.PasswordFields;
 import com.smoothstack.utopia.userauthservice.registration.error.InvalidTokenException;
 import com.smoothstack.utopia.userauthservice.service.UserService;
 
@@ -37,13 +31,9 @@ import com.smoothstack.utopia.userauthservice.service.UserService;
 public class PasswordResetController {
     @Autowired
     private UserService userService;
-    @Autowired
-    private MailSender mailSender;
-    @Autowired
-    private Environment env;
     
     private final String MAPPING_VALUE = "/password-reset";
-    private final String REST_ENTRYPOINT = System.getenv("SPRING_REST_ENRTYPONT");
+    //private final String REST_ENTRYPOINT = System.getenv("SPRING_REST_ENRTYPONT");
 
     
     // Send reset password token link
@@ -53,12 +43,12 @@ public class PasswordResetController {
     @ResponseStatus(HttpStatus.OK)
     public String resetPasswordTokenLink(@Pattern(regexp = "[a-zA-Z]+") @PathVariable("username") String username) {
         String token = UUID.randomUUID().toString();
-        userService.createPasswordResetTokenForUser(username, token);
+        userService.createPasswordResetTokenForUser(token,username);
         // TODO: send mail via another service 
-        mailSender.send(constructEmail("Reset Password",
-                "Your password reset link: "+ REST_ENTRYPOINT + MAPPING_VALUE + "/confirm-password-token/" + token,
-                userService.getUserByUsername(username).getEmail()));
-        return "{\"message\" : \"email-sent\"}";
+        //mailSender.send(constructEmail("Reset Password",
+        //        "Your password reset link: "+ REST_ENTRYPOINT + MAPPING_VALUE + "/confirm-password-token/" + token,
+        //        userService.getUserByUsername(username).getEmail()));
+        return "{\"message\" : \"email-sent\", \"token\" : \""+token+"\"}";
     }
     
     // Confirm password token before showing new password form
@@ -66,11 +56,11 @@ public class PasswordResetController {
             consumes = MediaType.APPLICATION_JSON_VALUE, 
             produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.OK)
-    public UserFields cofirmPasswordToken(@RequestParam("token") String token) {
+    public PasswordFields confirmPasswordToken(@PathVariable("token") String token) {
         if(!userService.validatePasswordResetToken(token)) {
             throw new InvalidTokenException();
         }        
-        return new UserDto();
+        return new PasswordDto();
     }
     
     // Receiving the new password form
@@ -79,20 +69,11 @@ public class PasswordResetController {
             produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.OK)
     public String registerUserAccount(@Valid @RequestBody final PasswordDto passwordDto) {
-        User user = userService.changeUserPassword(passwordDto);
+        userService.changeUserPassword(passwordDto);
         // TODO: send mail via another service 
-        mailSender.send(constructEmail("Password Rest", 
-                "If is was not done by you, please contact us.", 
-                user.getEmail()));
-        return "password-reset";
-    }
-    
-    private SimpleMailMessage constructEmail(String subject, String body, String email) {
-        SimpleMailMessage mailMessage = new SimpleMailMessage();
-        mailMessage.setSubject(subject);
-        mailMessage.setText(body);
-        mailMessage.setTo(email);
-        mailMessage.setFrom(env.getProperty("spring.mail.username"));
-        return mailMessage;
+        //mailSender.send(constructEmail("Password Rest", 
+        //        "If is was not done by you, please contact us.", 
+        //        user.getEmail()));
+        return "{\"message\" : \"password-reset\"}";
     }
 }

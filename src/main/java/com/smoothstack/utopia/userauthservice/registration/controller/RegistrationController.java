@@ -7,7 +7,6 @@ import java.util.UUID;
 
 import javax.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,8 +15,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.mail.MailSender;
-import org.springframework.mail.SimpleMailMessage;
 
 import com.smoothstack.utopia.shared.model.User;
 import com.smoothstack.utopia.userauthservice.registration.dto.UserDto;
@@ -31,13 +28,9 @@ import com.smoothstack.utopia.userauthservice.service.UserService;
 public class RegistrationController {
     @Autowired
     private UserService userService;
-    @Autowired
-    private MailSender mailSender;
-    @Autowired
-    private Environment env;
     
     private final String MAPPING_VALUE = "/registration";
-    private final String REST_ENTRYPOINT = System.getenv("SPRING_REST_ENRTYPONT");
+    //private final String REST_ENTRYPOINT = System.getenv("SPRING_REST_ENRTYPONT");
     
     // Registration
     @PostMapping(value = MAPPING_VALUE, 
@@ -50,9 +43,9 @@ public class RegistrationController {
         String token = UUID.randomUUID().toString();        
         userService.createVerificationTokenForUser(token, userDto.getUsername());  
         // TODO: send mail via another service 
-        mailSender.send(constructEmail("Registration Token", 
-                REST_ENTRYPOINT + MAPPING_VALUE + "/email-verification-token/" + token, 
-                userService.getUserByToken(token).getEmail()));
+        //mailSender.send(constructEmail("Registration Token", 
+        //        REST_ENTRYPOINT + MAPPING_VALUE + "/email-verification-token/" + token, 
+        //        userService.getUserByToken(token).getEmail()));
         return userService.registerNewUserAccount(userDto);
     }
     
@@ -65,10 +58,10 @@ public class RegistrationController {
         String token = UUID.randomUUID().toString();        
         userService.createVerificationTokenForUser(token, username);  
         // TODO: send mail via another service 
-        mailSender.send(constructEmail("Registration Token", 
-                REST_ENTRYPOINT + MAPPING_VALUE + "/email-verification/" + token, 
-                userService.getUserByToken(token).getEmail()));
-        return "email-sent";
+        //mailSender.send(constructEmail("Registration Token", 
+        //        REST_ENTRYPOINT + MAPPING_VALUE + "/email-verification/" + token, 
+        //        userService.getUserByToken(token).getEmail()));
+        return "{\"message\" : \"email-sent\"}";
     }
     
     // Email confirmation from token
@@ -79,17 +72,21 @@ public class RegistrationController {
     public String verifyEmail(@RequestParam("token") String token) {
         if (userService.validateEmailVerificationToken(token))
         {
-            return "Account Activated";
+            return "{\"message\" : \"Account Activated\"}";
         }
-        return "Account Not Activated. Token expired or invalid.";
+        return "{\"message\" : \"Account Not Activated. Token expired or invalid.\"}";
     }
     
-    private SimpleMailMessage constructEmail(String subject, String body, String email) {
-        SimpleMailMessage mailMessage = new SimpleMailMessage();
-        mailMessage.setSubject(subject);
-        mailMessage.setText(body);
-        mailMessage.setTo(email);
-        mailMessage.setFrom(env.getProperty("spring.mail.username"));
-        return mailMessage;
-    }
+    
+/*
+  @Bean
+  private SimpleMailMessage constructEmail(String subject, String body, String email) {
+      SimpleMailMessage mailMessage = new SimpleMailMessage();
+      mailMessage.setSubject(subject);
+      mailMessage.setText(body);
+      mailMessage.setTo(email);
+      mailMessage.setFrom(env.getProperty("spring.mail.username"));
+      return mailMessage;
+  }
+*/
 }
