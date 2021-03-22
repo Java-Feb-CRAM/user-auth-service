@@ -4,13 +4,11 @@
 package com.smoothstack.utopia.userauthservice.service;
 
 import java.time.LocalDateTime;
-
 import javax.transaction.Transactional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
 import com.smoothstack.utopia.shared.model.PasswordResetToken;
 import com.smoothstack.utopia.shared.model.User;
 import com.smoothstack.utopia.shared.model.VerificationToken;
@@ -24,6 +22,7 @@ import com.smoothstack.utopia.userauthservice.registration.error.InvalidCurrentP
 import com.smoothstack.utopia.userauthservice.registration.error.InvalidRoleException;
 import com.smoothstack.utopia.userauthservice.registration.error.InvalidTokenException;
 import com.smoothstack.utopia.userauthservice.registration.error.InvalidUserException;
+import com.smoothstack.utopia.userauthservice.registration.error.PasswordResetTokenExpiredException;
 import com.smoothstack.utopia.userauthservice.registration.error.UnmatchedPasswordException;
 import com.smoothstack.utopia.userauthservice.registration.error.UserAlreadyExistException;
 
@@ -58,7 +57,7 @@ public class UserService {
     private void setUserActive(String token)
     {
         User user = getUserByToken(token);
-        user.setActive((short)1);
+        user.setActive(true);
         userRepository.save(user);
     }
 
@@ -131,29 +130,50 @@ public class UserService {
         passwordResetTokenRepository.save(new PasswordResetToken(token, user));        
     }
 
-    public User changeUserPassword(PasswordDto passwordDto) throws UnmatchedPasswordException, InvalidCurrentPasswordException
+    public User changeUserPassword(PasswordDto passwordDto) throws UnmatchedPasswordException, InvalidCurrentPasswordException, PasswordResetTokenExpiredException
     {
         PasswordResetToken passwordResetToken = passwordResetTokenRepository
                 .findByToken(passwordDto.getToken()).orElseThrow(InvalidTokenException::new);
-        User user = passwordResetToken.getUser();
-        if (passwordEncoder.matches(passwordDto.getCurrentPassword(), user.getPassword()))
-        {
-            if (passwordDto.getNewPassword().equals(passwordDto.getConfirmNewPassword()))
+        if (passwordResetToken.getExpiryDate().isAfter(LocalDateTime.now()))
+        {        
+            User user = passwordResetToken.getUser();
+            if (passwordEncoder.matches(passwordDto.getCurrentPassword(), user.getPassword()))
             {
-                user.setPassword(passwordEncoder.encode(passwordDto.getNewPassword()));
+                if (passwordDto.getNewPassword().equals(passwordDto.getConfirmNewPassword()))
+                {
+                    user.setPassword(passwordEncoder.encode(passwordDto.getNewPassword()));
+                }
+                else
+                {
+                    throw new UnmatchedPasswordException();
+                }
             }
             else
             {
-                throw new UnmatchedPasswordException();
+                throw new InvalidCurrentPasswordException();
             }
+            
+            userRepository.save(user);
+            passwordResetTokenRepository.delete(passwordResetToken);
+            return user;
         }
         else
         {
-            throw new InvalidCurrentPasswordException();
+            throw new PasswordResetTokenExpiredException();
         }
-        
-        userRepository.save(user);
-        passwordResetTokenRepository.delete(passwordResetToken);
-        return user;
+    }
+    
+    public String dumpUserFieldsToJson(User user)
+    {
+        return  "\"User\" : { "+
+                    "\"id\" : " + user.getId() +","+
+                    "\"username\" : \"" + user.getUsername() +"\","+
+                    "\"phone\" : \"" + user.getPhone() +"\","+
+                    "\"email\" : \"" + user.getEmail() +"\","+
+                    "\"familyName\" : \"" + user.getFamilyName() +"\","+
+                    "\"givenName\" : \"" + user.getGivenName() +"\","+
+                    "\"userRole\" : {" +
+                            "\"id\" : " + user.getUserRole().getId() + "}," +
+                    "\"active\" : " + user.isActive() + "}";
     }
 }

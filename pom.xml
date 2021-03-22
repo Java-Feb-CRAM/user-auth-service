@@ -13,7 +13,11 @@
 	<artifactId>user-auth-service</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>user-auth-service</name>
-	<description>Demo project for Spring Boot</description>
+	<description>User registration and authorization service</description>
+	<properties>
+		<java.version>15</java.version>
+        <spring-cloud.version>2020.0.1</spring-cloud.version>
+	</properties>
 	<repositories>
 		<repository>
 			<id>central</id>
@@ -24,9 +28,6 @@
 			<url>https://maven.pkg.github.com/Java-Feb-CRAM/shared</url>
 		</repository>
 	</repositories>
-	<properties>
-		<java.version>15</java.version>
-	</properties>
 	<dependencies>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -34,17 +35,16 @@
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-security</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-web</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>org.springframework.security.experimental</groupId>
-			<artifactId>spring-security-oauth2-authorization-server</artifactId>
-			<version>0.1.0</version>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-security</artifactId>
 		</dependency>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+        </dependency>
 		<dependency>
 			<groupId>com.smoothstack.utopia</groupId>
 			<artifactId>shared</artifactId>
@@ -59,21 +59,6 @@
 			<groupId>javax.validation</groupId>
 			<artifactId>validation-api</artifactId>
 		</dependency>
-		<dependency>
-			<groupId>org.passay</groupId>
-			<artifactId>passay</artifactId>
-			<version>1.0</version>
-		</dependency>
-		<dependency>
-			<groupId>io.jsonwebtoken</groupId>
-			<artifactId>jjwt</artifactId>
-			<version>0.9.1</version>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-mail</artifactId>
-		</dependency>
-
 
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -97,6 +82,17 @@
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>org.springframework.cloud</groupId>
+				<artifactId>spring-cloud-dependencies</artifactId>
+				<version>${spring-cloud.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
 
 	<build>
 		<plugins>
