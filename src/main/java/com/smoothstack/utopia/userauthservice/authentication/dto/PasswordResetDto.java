@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.smoothstack.utopia.userauthservice.registration.dto;
+package com.smoothstack.utopia.userauthservice.authentication.dto;
 
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
@@ -25,7 +25,7 @@ import lombok.ToString;
 @Getter
 @Setter
 @ToString
-public class PasswordDto {
+public class PasswordResetDto {
     
     @NotNull
     private  String token;

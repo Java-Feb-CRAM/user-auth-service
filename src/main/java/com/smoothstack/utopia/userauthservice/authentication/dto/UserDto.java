@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.smoothstack.utopia.userauthservice.registration.dto;
+package com.smoothstack.utopia.userauthservice.authentication.dto;
 
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotNull;
