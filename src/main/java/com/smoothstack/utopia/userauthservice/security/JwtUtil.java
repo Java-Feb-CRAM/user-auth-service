@@ -11,12 +11,11 @@ import java.util.Date;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+
+import com.smoothstack.utopia.userauthservice.authentication.error.InvalidCredentialsException;
 
 /**
  * @author Rob Maes Mar 19 2021
@@ -25,7 +24,7 @@ import org.springframework.stereotype.Component;
 public class JwtUtil implements Serializable {
     private final String jwtIssuer = "utopia.smoothstack.com";
     private final int ONE_WEEK_MILLISECONDS = 7 * 24 * 60 * 60 * 1000;
-    
+
     @Serial
     private static final long serialVersionUID = -569378531925824570L;
 
@@ -44,13 +43,14 @@ public class JwtUtil implements Serializable {
 
     public String getAuthenticatedJwt(String username, String password)
     {
-        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, password));
+        try
+        {
+            authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, password));
+        }
+        catch (Exception e)
+        {
+            throw new InvalidCredentialsException();
+        }
         return generateJwt(username);
-    }
-    
-    @Bean
-    public PasswordEncoder passwordEncoder()
-    {
-        return new BCryptPasswordEncoder();
     }
 }

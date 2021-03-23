@@ -17,5 +17,6 @@ import com.smoothstack.utopia.shared.model.UserRole;
 @Repository
 public interface UserRoleRepository extends JpaRepository<UserRole, Long> {
     public Optional<UserRole> findById(int id);
+
     public Optional<UserRole> findByName(String name);
 }

@@ -30,22 +30,22 @@ import com.smoothstack.utopia.userauthservice.authentication.util.ControllerUtil
  *
  */
 @RestController
-@RequestMapping(consumes = MediaType.APPLICATION_JSON_VALUE, 
-        produces = MediaType.APPLICATION_JSON_VALUE)
+@RequestMapping(consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
 public class RegistrationController extends ControllerUtil {
     @Autowired
     private UserService userService;
-    
+
     private final String MAPPING_VALUE = "/registration";
-    
+
     // Registration
     @PostMapping(value = MAPPING_VALUE)
-    public String registerUserAccount(@Valid @RequestBody final UserDto userDto) {
+    public String registerUserAccount(@Valid @RequestBody final UserDto userDto)
+    {
         User user = userService.registerNewUserAccount(userDto);
-        
-        String token = UUID.randomUUID().toString();        
-        userService.createVerificationTokenForUser(token, userDto.getUsername());  
 
+        String token = UUID.randomUUID().toString();
+        userService.createVerificationTokenForUser(token, userDto.getUsername());
+        // TODO: Send Email
         Map<String, Object> userRoleJsonMap = new HashMap<>();
         userRoleJsonMap.put("id", user.getUserRole().getId());
         userRoleJsonMap.put("name", user.getUserRole().getName());
@@ -56,40 +56,43 @@ public class RegistrationController extends ControllerUtil {
         userJsonMap.put("email", user.getEmail());
         userJsonMap.put("familyName", user.getFamilyName());
         userJsonMap.put("givenName", user.getGivenName());
-        userJsonMap.put("userRole", getJsonBodyAsString(userRoleJsonMap));
+        userJsonMap.put("userRole", userRoleJsonMap);
         userJsonMap.put("active", user.isActive());
         Map<String, Object> jsonBody = new HashMap<>();
         jsonBody.put("status", 201);
         jsonBody.put("message", "inactive-user-created");
         jsonBody.put("token", token);
-        jsonBody.put("User", getJsonBodyAsString(userJsonMap));
-        
+        jsonBody.put("user", userJsonMap);
+
         return getJsonBodyAsString(jsonBody);
     }
-    
+
     // Resend user email verification token - re-send token
     @GetMapping(path = MAPPING_VALUE + "/email-verification-resend/{username}")
-    public String recreateVerificationToken(@Pattern(regexp = "[a-zA-Z]+") @PathVariable("username") String username) {   
-        String token = UUID.randomUUID().toString();        
+    public String recreateVerificationToken(@Pattern(regexp = "[a-zA-Z]+") @PathVariable("username") String username)
+    {
+        String token = UUID.randomUUID().toString();
         userService.createVerificationTokenForUser(token, username);
-        
+        // TODO: Send Email
         Map<String, Object> jsonBody = new HashMap<>();
         jsonBody.put("status", 200);
         jsonBody.put("message", "token-recreated");
         jsonBody.put("token", token);
         return getJsonBodyAsString(jsonBody);
     }
-    
+
     // Confirmation from token
     @GetMapping(path = MAPPING_VALUE + "/email-verification/{token}")
-    public String verifyEmail(@PathVariable("token") String token) {
-        if(!userService.validateEmailVerificationToken(token)) {
+    public String verifyEmail(@PathVariable("token") String token)
+    {
+        if (!userService.validateEmailVerificationToken(token))
+        {
             throw new PasswordResetTokenExpiredException();
         }
-        
+
         Map<String, Object> jsonBody = new HashMap<>();
         jsonBody.put("status", 200);
-        jsonBody.put("message", "user-activated"); 
-        return getJsonBodyAsString(jsonBody);     
+        jsonBody.put("message", "user-activated");
+        return getJsonBodyAsString(jsonBody);
     }
 }

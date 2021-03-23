@@ -33,52 +33,56 @@ import com.smoothstack.utopia.userauthservice.authentication.util.ControllerUtil
  *
  */
 @RestController
-@RequestMapping(consumes = MediaType.APPLICATION_JSON_VALUE, 
-    produces = MediaType.APPLICATION_JSON_VALUE)
+@RequestMapping(consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
 public class PasswordResetController extends ControllerUtil {
     @Autowired
     private UserService userService;
-    
+
     private final String MAPPING_VALUE = "/password-reset";
 
     // Receiving the new password form
     @PostMapping(value = MAPPING_VALUE)
-    public String changeUserPassword(@Valid @RequestBody final PasswordResetDto passwordDto) {
-        userService.changeUserPassword(passwordDto);
-        
+    public String changeUserPassword(@Valid @RequestBody final PasswordResetDto passwordResetDto)
+    {
+        userService.changeUserPassword(passwordResetDto);
+        // TODO: send email        
         Map<String, Object> jsonMap = new HashMap<>();
         List<String> returnFields = new ArrayList<>();
-        Stream.of(PasswordResetFields.values()).forEach(f -> returnFields.add(f.toString()+","));
+        Stream.of(PasswordResetFields.values()).forEach(f -> returnFields.add(f.toString()));
         jsonMap.put("status", 200);
         jsonMap.put("message", "password-reset");
         return getJsonBodyAsString(jsonMap);
     }
-    
+
     // Send reset password token link
     @GetMapping(path = MAPPING_VALUE + "/reset-password-token-link/{username}")
-    public String resetPasswordTokenLink(@Pattern(regexp = "[a-zA-Z]+") @PathVariable("username") String username) {
+    public String resetPasswordTokenLink(@Pattern(regexp = "[a-zA-Z]+") @PathVariable("username") String username)
+    {
         String token = UUID.randomUUID().toString();
-        userService.createPasswordResetTokenForUser(token,username);   
+        userService.createPasswordResetTokenForUser(token, username);
+        // TODO: send email
         Map<String, Object> jsonMap = new HashMap<>();
         jsonMap.put("status", 200);
-        jsonMap.put("message", "email-sent");
+        jsonMap.put("message", "token-created");
         jsonMap.put("token", token);
         return getJsonBodyAsString(jsonMap);
     }
-    
+
     // Confirm password token before showing new password form
     @GetMapping(path = MAPPING_VALUE + "/confirm-password-token/{token}")
-    public String confirmPasswordToken(@PathVariable("token") String token) {
-        if(!userService.validatePasswordResetToken(token)) {
+    public String confirmPasswordToken(@PathVariable("token") String token)
+    {
+        if (!userService.validatePasswordResetToken(token))
+        {
             throw new PasswordResetTokenExpiredException();
-        }        
-        
+        }
         Map<String, Object> jsonMap = new HashMap<>();
-        List<String> returnFields = new ArrayList<>();
-        Stream.of(PasswordResetFields.values()).forEach(f -> returnFields.add(f.toString()+","));
+        List<String> requestFields = new ArrayList<>();
+        Stream.of(PasswordResetFields.values()).forEach(f -> requestFields.add(f.toString()));
         jsonMap.put("status", 200);
         jsonMap.put("message", "token-confirmed");
-        jsonMap.put("return_fields", returnFields.toArray());
+        jsonMap.put("token", token);
+        jsonMap.put("post-request-fields", requestFields.toArray(new String[requestFields.size()]));
         return getJsonBodyAsString(jsonMap);
     }
 }

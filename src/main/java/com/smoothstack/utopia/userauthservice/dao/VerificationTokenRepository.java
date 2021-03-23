@@ -18,5 +18,6 @@ import com.smoothstack.utopia.shared.model.VerificationToken;
 @Repository
 public interface VerificationTokenRepository extends JpaRepository<VerificationToken, Integer> {
     public Optional<VerificationToken> findByToken(String token);
+
     public Optional<VerificationToken> findByUser(User user);
 }

@@ -8,6 +8,6 @@ package com.smoothstack.utopia.userauthservice.authentication.dto;
  *
  */
 public enum Credentials {
-    username,
+    username, 
     password
 }

@@ -10,13 +10,13 @@ import org.springframework.stereotype.Repository;
 
 import com.smoothstack.utopia.shared.model.User;
 
-
 /**
  * @author Craig Saunders
  *
  */
 @Repository
-public interface UserRepository extends JpaRepository<User, Long> {    
+public interface UserRepository extends JpaRepository<User, Long> {
     public Optional<User> findByUsername(String username);
+
     public Optional<User> findByEmail(String email);
 }
