@@ -10,7 +10,6 @@ import javax.validation.constraints.Size;
 
 import lombok.Getter;
 import lombok.Setter;
-import lombok.ToString;
 
 /**
  * @author Craig Saunders
@@ -22,10 +21,9 @@ import lombok.ToString;
  */
 @Getter
 @Setter
-@ToString
 public class UserDto {
     @NotNull
-    @Pattern(regexp = "[a-zA-Z]+")
+    @Pattern(regexp = "[a-zA-Z\\d_]+")
     @Size(min = 8, max = 32, message = "{Size.userDto.username}")
     private String username;
 
