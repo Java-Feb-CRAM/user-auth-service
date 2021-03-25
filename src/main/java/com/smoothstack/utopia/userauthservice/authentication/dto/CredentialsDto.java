@@ -9,7 +9,6 @@ import javax.validation.constraints.Size;
 
 import lombok.Getter;
 import lombok.Setter;
-import lombok.ToString;
 
 /**
  * @author Craig Saunders
@@ -17,12 +16,11 @@ import lombok.ToString;
  */
 @Getter
 @Setter
-@ToString
 public class CredentialsDto {
 
     @NotNull(message = "Username is required")
     @Size(min = 8, max = 32, message = "{Size.userDto.username}")
-    @Pattern(regexp = "[a-zA-Z]+")
+    @Pattern(regexp = "[a-zA-Z\\d_]+")
     private String username;
 
     @NotNull(message = "Password is required")
