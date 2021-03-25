@@ -157,7 +157,9 @@ public class AuthenticationController {
             .accept(MediaType.APPLICATION_JSON)
             .content(inputJson)
             .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON_VALUE))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.authenticated-jwt").exists());
 
         assertThat(userRepository.findByUsername("LSimpson").get().isActive());
         assertFalse(passwordEncoder.encode("All10CowsAllowed!!!").matches(userRepository.findByUsername("LSimpson").get().getPassword()));
