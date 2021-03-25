@@ -12,7 +12,6 @@ import org.springframework.stereotype.Service;
 
 import com.smoothstack.utopia.shared.model.PasswordResetToken;
 import com.smoothstack.utopia.shared.model.User;
-import com.smoothstack.utopia.shared.model.UserRole;
 import com.smoothstack.utopia.shared.model.VerificationToken;
 import com.smoothstack.utopia.userauthservice.authentication.dto.CredentialsDto;
 import com.smoothstack.utopia.userauthservice.authentication.dto.PasswordResetDto;
@@ -101,8 +100,7 @@ public class UserService {
 			user.setPassword(passwordEncoder.encode(userDto.getPassword()));
 			user.setEmail(userDto.getEmail());
 			user.setPhone(userDto.getPhone());
-			user.setUserRole(userRoleRepository.findByName("ROLE_USER")
-					.orElse(userRoleRepository.save(new UserRole("ROLE_USER"))));
+			user.setUserRole(userRoleRepository.findByName("ROLE_USER").get());
 			return userRepository.save(user);
 		} else {
 			throw new UnmatchedPasswordException();
