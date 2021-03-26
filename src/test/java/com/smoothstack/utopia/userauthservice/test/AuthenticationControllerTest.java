@@ -36,7 +36,7 @@ import com.smoothstack.utopia.userauthservice.dao.UserRoleRepository;
 @TestPropertySource(
   locations = "classpath:application-integrationtest.properties"
 )
-public class AuthenticationController {
+public class AuthenticationControllerTest {
     @Autowired
     MockMvc mvc;
 
@@ -157,9 +157,7 @@ public class AuthenticationController {
             .accept(MediaType.APPLICATION_JSON)
             .content(inputJson)
             .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isBadRequest())
-                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON_VALUE))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.authenticated-jwt").exists());
+                .andExpect(status().isBadRequest());
 
         assertThat(userRepository.findByUsername("LSimpson").get().isActive());
         assertFalse(passwordEncoder.encode("All10CowsAllowed!!!").matches(userRepository.findByUsername("LSimpson").get().getPassword()));

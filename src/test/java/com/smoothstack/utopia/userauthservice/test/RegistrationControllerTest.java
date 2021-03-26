@@ -123,7 +123,7 @@ public class RegistrationControllerTest {
             .accept(MediaType.APPLICATION_JSON)
             .content(inputJson)
             .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON_VALUE))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.accountVerificationToken").exists());
         assertThat(userDto.getGivenName().equals(userRepository.findByUsername("HSimpson").get().getGivenName()));
@@ -295,7 +295,7 @@ public class RegistrationControllerTest {
             .accept(MediaType.APPLICATION_JSON)
             .content(inputJson)
             .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON_VALUE))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.accountVerificationToken").exists()).andReturn();
         String token = mapper.readTree(mvcResult.getResponse().getContentAsString()).get("accountVerificationToken").asText();        
