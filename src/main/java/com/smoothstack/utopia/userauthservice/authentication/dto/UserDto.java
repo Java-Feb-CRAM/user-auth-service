@@ -22,34 +22,33 @@ import lombok.Setter;
 @Getter
 @Setter
 public class UserDto {
-    @NotNull
-    @Pattern(regexp = "[a-zA-Z\\d_]+")
-    @Size(min = 8, max = 32, message = "{Size.userDto.username}")
+    @NotNull(message = "${message.username.null}")
+    @Pattern(regexp = "${regex.username}")
+    @Size(min = 8, max = 32, message = "${message.username.invalid.size}")
     private String username;
 
-    @NotNull
-    @Size(min = 10, max = 16, message = "{Size.userDto.phone}")
+    @NotNull(message = "${message.phone.null}")
+    @Size(min = 10, max = 16, message = "${message.phone.invalid.size}")
     private String phone;
 
-    @NotNull
+    @NotNull(message = "${message.email.null}")
     @Email
-    @Size(min = 6, max = 128, message = "{Size.userDto.email}")
     private String email;
 
-    @NotNull
-    @Size(min = 1, max = 32, message = "{Size.userDto.familyName}")
+    @NotNull(message = "${message.name.family.null}")
+    @Size(min = 1, max = 32, message = "${message.name.family.invalid.size}")
     private String familyName;
 
-    @NotNull
-    @Size(min = 1, max = 32, message = "{Size.userDto.givenName}")
+    @NotNull(message = "${message.name.given.null}")
+    @Size(min = 1, max = 32, message = "${message.name.given.invalid.size}")
     private String givenName;
 
-    @NotNull
-    @Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@!#$%^&*_+=~])[A-Za-z\\d@!#$%^&*_+=~]{8,32}$")
-    @Size(min = 8, max = 32, message = "Password must be between 8 to 32 characters")
+    @NotNull(message = "${message.password.null}")
+    @Pattern(regexp = "${regex.password}")
+    @Size(min = 8, max = 32, message = "${message.password.invalid.size}")
     private String password;
 
-    @NotNull
-    @Size(min = 8, max = 32)
+    @NotNull(message = "${message.password.matching.null}")
+    @Size(min = 8, max = 32, message = "${message.password.matching.invalid.size}")
     private String matchingPassword;
 }

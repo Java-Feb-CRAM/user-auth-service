@@ -57,6 +57,12 @@ public class PasswordResetControllerTest {
     
     private ObjectMapper mapper;
     
+    private final String VALID_USER_PASSWORD = "Not1CowAllowed!!!";
+    private final String VALID_USER_USERNAME = "BSimpson";
+    private final String INVALID_USER_PASSWORD = "Only1CowAllowed!!!";
+    private final String NEW_PASSWORD = "Is#1!ssJAVA_feb_2021";
+    private final String UNMATCHING_PASSWORD = "Is#1!ssJAVA_feb_2019";
+    
     @BeforeEach
     private void setupDatabase()
     {
@@ -75,30 +81,34 @@ public class PasswordResetControllerTest {
         user.setFamilyName("Simpson");
         user.setGivenName("Bart");
         user.setPhone("7777777777");
-        user.setUsername("BSimpson");
+        user.setUsername(VALID_USER_USERNAME);
         user.setUserRole(userRole);
-        user.setPassword(passwordEncoder.encode("Not1CowAllowed!!!"));
+        user.setPassword(passwordEncoder.encode(VALID_USER_PASSWORD));
         userRepository.save(user);
     }
 
-    private final String MAPPING_VALUE = "/password-reset";
+    private final String MAPPING_VALUE = "/users";
+    private final String UPDATE_PASSWORD = MAPPING_VALUE + "/password/new";
+    private final String GENERATE_TOKEN = MAPPING_VALUE + "/password/tokens/generate";
+    private final String CONFIRM_TOKEN = MAPPING_VALUE + "/password/tokens/confirm";
     
     @Test
-    public void changeUserPasswordHappyPath() throws Exception
+    public void changeUserPassword_WithGeneratedTokenFromExistingUsername_UpdateValidPassword_Status200_AssertChangedPassword() throws Exception
     {
-        String uri = MAPPING_VALUE + "/reset-password-token-link/BSimpson";  
+        String uri = GENERATE_TOKEN;  
         // Get created token
-        MvcResult mvcResult = mvc.perform(MockMvcRequestBuilders.get(uri)
+        MvcResult mvcResult = mvc.perform(MockMvcRequestBuilders.post(uri)
                 .accept(MediaType.APPLICATION_JSON)
+                .content("{\"username\":\""+VALID_USER_USERNAME+"\"}")
                 .contentType(MediaType.APPLICATION_JSON)).andReturn();
         String token = mapper.readTree(mvcResult.getResponse().getContentAsString()).get("token").asText();
         
-        uri = MAPPING_VALUE;
+        uri = UPDATE_PASSWORD;
         // populate params
         PasswordResetDto passwordResetDto = new PasswordResetDto();
-        passwordResetDto.setCurrentPassword("Not1CowAllowed!!!");
-        passwordResetDto.setNewPassword("Is#1!ssJAVA_feb_2021");
-        passwordResetDto.setConfirmNewPassword("Is#1!ssJAVA_feb_2021");
+        passwordResetDto.setCurrentPassword(VALID_USER_PASSWORD);
+        passwordResetDto.setNewPassword(NEW_PASSWORD);
+        passwordResetDto.setConfirmNewPassword(NEW_PASSWORD);
         passwordResetDto.setToken(token);
         
         // Change password 
@@ -110,46 +120,18 @@ public class PasswordResetControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON_VALUE));
         
-        assertThat(passwordEncoder.encode("Is#1!ssJAVA_feb_2021").matches(userRepository.findByUsername("BSimpson").get().getPassword()));      
+        assertThat(passwordEncoder.encode(NEW_PASSWORD).matches(userRepository.findByUsername(VALID_USER_USERNAME).get().getPassword()));      
     }
     
     @Test
-    public void changeUserPasswordNegativePathTokenNotExists() throws Exception
+    public void changeUserPassword_WithNoToken_Status400() throws Exception
     {           
         PasswordResetDto passwordResetDto = new PasswordResetDto();
-        passwordResetDto.setCurrentPassword("Not1CowAllowed!!!");
-        passwordResetDto.setNewPassword("Is#1!ssJAVA_feb_2021");
-        passwordResetDto.setConfirmNewPassword("Is#1!ssJAVA_feb_2021");
+        passwordResetDto.setCurrentPassword(VALID_USER_PASSWORD);
+        passwordResetDto.setNewPassword(NEW_PASSWORD);
+        passwordResetDto.setConfirmNewPassword(NEW_PASSWORD);
         
-        String uri = MAPPING_VALUE;
-        
-        String inputJson = mapper.writeValueAsString(passwordResetDto);
-        mvc.perform(MockMvcRequestBuilders.post(uri)
-            .accept(MediaType.APPLICATION_JSON)
-            .content(inputJson)
-            .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isBadRequest());
-    }
-    
-    @Test
-    public void changeUserPasswordNegativePathUsernameNotExists() throws Exception
-    {        
-        String uri = MAPPING_VALUE + "/reset-password-token-link/BSimpson"; // username does not exist     
-        MvcResult mvcResult = mvc.perform(MockMvcRequestBuilders.get(uri)
-        		.accept(MediaType.APPLICATION_JSON)
-                .contentType(MediaType.APPLICATION_JSON)).andReturn();
-        String token = mapper.readTree(mvcResult.getResponse().getContentAsString()).get("token").asText();
-        
-        passwordResetTokenRepository.delete(passwordResetTokenRepository.findByToken(token).get());
-        
-        // Reverse the password but don't change the token
-        PasswordResetDto passwordResetDto = new PasswordResetDto();
-        passwordResetDto.setCurrentPassword("Not1CowAllowed!!!");
-        passwordResetDto.setNewPassword("Is#1!ssJAVA_feb_2021");
-        passwordResetDto.setConfirmNewPassword("Is#1!ssJAVA_feb_2021");
-        passwordResetDto.setToken(token);
-        
-        uri = MAPPING_VALUE;
+        String uri = UPDATE_PASSWORD;
         
         String inputJson = mapper.writeValueAsString(passwordResetDto);
         mvc.perform(MockMvcRequestBuilders.post(uri)
@@ -160,21 +142,24 @@ public class PasswordResetControllerTest {
     }
     
     @Test
-    public void changeUserPasswordNegativePathCurrentPasswordInvalid() throws Exception
+    public void changeUserPassword_WithGeneratedTokenDeletedFromDatabase_NoPasswordUpdatePerformed_Staus400() throws Exception
     {        
-        String uri = MAPPING_VALUE + "/reset-password-token-link/BSimpson";     
-        MvcResult mvcResult = mvc.perform(MockMvcRequestBuilders.get(uri)
+        String uri = GENERATE_TOKEN;     
+        MvcResult mvcResult = mvc.perform(MockMvcRequestBuilders.post(uri)
         		.accept(MediaType.APPLICATION_JSON)
+                .content("{\"username\":\""+VALID_USER_USERNAME+"\"}")
                 .contentType(MediaType.APPLICATION_JSON)).andReturn();
         String token = mapper.readTree(mvcResult.getResponse().getContentAsString()).get("token").asText();
         
+        passwordResetTokenRepository.delete(passwordResetTokenRepository.findByToken(token).get()); // Token deleted
+        
         PasswordResetDto passwordResetDto = new PasswordResetDto();
-        passwordResetDto.setCurrentPassword("Only1CowAllowed!!!"); // Wrong current password
-        passwordResetDto.setNewPassword("Is#1!ssJAVA_feb_2021");
-        passwordResetDto.setConfirmNewPassword("Is#1!ssJAVA_feb_2021");
+        passwordResetDto.setCurrentPassword(VALID_USER_PASSWORD);
+        passwordResetDto.setNewPassword(NEW_PASSWORD);
+        passwordResetDto.setConfirmNewPassword(NEW_PASSWORD);
         passwordResetDto.setToken(token);
         
-        uri = MAPPING_VALUE;
+        uri = UPDATE_PASSWORD;
         
         String inputJson = mapper.writeValueAsString(passwordResetDto);
         mvc.perform(MockMvcRequestBuilders.post(uri)
@@ -183,23 +168,24 @@ public class PasswordResetControllerTest {
             .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest());
     }
-
+    
     @Test
-    public void changeUserPasswordNegativePathPasswordMatchingFailed() throws Exception
+    public void changeUserPassword_WithGeneratedTokenFromExistingUsername_InvalidCurrentPassword_NoPasswordUpdatePerformed_Staus409_AssertPasswordUnchanged() throws Exception
     {        
-        String uri = MAPPING_VALUE + "/reset-password-token-link/BSimpson";     
-        MvcResult mvcResult = mvc.perform(MockMvcRequestBuilders.get(uri)
+        String uri = GENERATE_TOKEN;     
+        MvcResult mvcResult = mvc.perform(MockMvcRequestBuilders.post(uri)
         		.accept(MediaType.APPLICATION_JSON)
+                .content("{\"username\":\""+VALID_USER_USERNAME+"\"}")
                 .contentType(MediaType.APPLICATION_JSON)).andReturn();
         String token = mapper.readTree(mvcResult.getResponse().getContentAsString()).get("token").asText();
         
         PasswordResetDto passwordResetDto = new PasswordResetDto();
-        passwordResetDto.setCurrentPassword("Not1CowAllowed!!!"); 
-        passwordResetDto.setNewPassword("Is#1!ssJAVA_feb_3333"); 
-        passwordResetDto.setConfirmNewPassword("Is#1!ssJAVA_feb_2021"); // not a match
+        passwordResetDto.setCurrentPassword(INVALID_USER_PASSWORD); // Wrong current password
+        passwordResetDto.setNewPassword(NEW_PASSWORD);
+        passwordResetDto.setConfirmNewPassword(NEW_PASSWORD);
         passwordResetDto.setToken(token);
         
-        uri = MAPPING_VALUE;
+        uri = UPDATE_PASSWORD;
         
         String inputJson = mapper.writeValueAsString(passwordResetDto);
         mvc.perform(MockMvcRequestBuilders.post(uri)
@@ -207,22 +193,52 @@ public class PasswordResetControllerTest {
             .content(inputJson)
             .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isConflict());
-    } 
+        
+        assertThat(passwordEncoder.encode(VALID_USER_PASSWORD).matches(userRepository.findByUsername(VALID_USER_USERNAME).get().getPassword())); 
+    }
 
     @Test
-    public void changeUserPasswordNegativePathTokenExpired() throws Exception
+    public void changeUserPassword_WithGeneratedTokenFromExistingUsername_NewPasswordUnmatching_NoPasswordUpdatePerformed_Staus409_AssertPasswordUnchanged() throws Exception
     {        
-        String uri = MAPPING_VALUE + "/reset-password-token-link/BSimpson";     
-        MvcResult mvcResult = mvc.perform(MockMvcRequestBuilders.get(uri)
+        String uri = GENERATE_TOKEN;     
+        MvcResult mvcResult = mvc.perform(MockMvcRequestBuilders.post(uri)
         		.accept(MediaType.APPLICATION_JSON)
+                .content("{\"username\":\""+VALID_USER_USERNAME+"\"}")
                 .contentType(MediaType.APPLICATION_JSON)).andReturn();
         String token = mapper.readTree(mvcResult.getResponse().getContentAsString()).get("token").asText();
         
-        // Reverse the password but don't change the token
         PasswordResetDto passwordResetDto = new PasswordResetDto();
-        passwordResetDto.setCurrentPassword("Not1CowAllowed!!!"); // Wrong current password
-        passwordResetDto.setNewPassword("Is#1!ssJAVA_feb_2021");
-        passwordResetDto.setConfirmNewPassword("Is#1!ssJAVA_feb_2021");
+        passwordResetDto.setCurrentPassword(VALID_USER_PASSWORD); 
+        passwordResetDto.setNewPassword(NEW_PASSWORD); 
+        passwordResetDto.setConfirmNewPassword(UNMATCHING_PASSWORD); // not a match
+        passwordResetDto.setToken(token);
+        
+        uri = UPDATE_PASSWORD;
+        
+        String inputJson = mapper.writeValueAsString(passwordResetDto);
+        mvc.perform(MockMvcRequestBuilders.post(uri)
+            .accept(MediaType.APPLICATION_JSON)
+            .content(inputJson)
+            .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isConflict());
+        
+        assertThat(passwordEncoder.encode(VALID_USER_PASSWORD).matches(userRepository.findByUsername(VALID_USER_USERNAME).get().getPassword())); 
+    } 
+
+    @Test
+    public void changeUserPassword_WithGeneratedTokenFromExistingUsername_ExpireTheToken_TokenExpired_NoPasswordUpdatePerformed_Staus400_AssertPasswordUnchanged() throws Exception
+    {        
+        String uri = GENERATE_TOKEN;     
+        MvcResult mvcResult = mvc.perform(MockMvcRequestBuilders.post(uri)
+        		.accept(MediaType.APPLICATION_JSON)
+                .content("{\"username\":\""+VALID_USER_USERNAME+"\"}")
+                .contentType(MediaType.APPLICATION_JSON)).andReturn();
+        String token = mapper.readTree(mvcResult.getResponse().getContentAsString()).get("token").asText();
+        
+        PasswordResetDto passwordResetDto = new PasswordResetDto();
+        passwordResetDto.setCurrentPassword(VALID_USER_PASSWORD);
+        passwordResetDto.setNewPassword(NEW_PASSWORD);
+        passwordResetDto.setConfirmNewPassword(NEW_PASSWORD);
         passwordResetDto.setToken(token);
         
         // Expire the token by one day
@@ -230,7 +246,7 @@ public class PasswordResetControllerTest {
         passwordResetToken.setExpiryDate(LocalDateTime.now().minus(Duration.ofDays(1)));
         passwordResetTokenRepository.save(passwordResetToken);    
         
-        uri = MAPPING_VALUE;
+        uri = UPDATE_PASSWORD;
         
         String inputJson = mapper.writeValueAsString(passwordResetDto);
         mvc.perform(MockMvcRequestBuilders.post(uri)
@@ -238,20 +254,21 @@ public class PasswordResetControllerTest {
             .content(inputJson)
             .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest());
+        
+        assertThat(passwordEncoder.encode(VALID_USER_PASSWORD).matches(userRepository.findByUsername(VALID_USER_USERNAME).get().getPassword())); 
     }
     
     @Test
-    public void changeUserPasswordNegativePathInvalidToken() throws Exception
+    public void changeUserPassword_WithInvalidInjectedToken_TokenInvalidated_NoPasswordUpdatePerformed_Staus400_AssertPasswordUnchanged() throws Exception
     {        
-    	String uri = MAPPING_VALUE + "/reset-password-token-link/BSimpson";
         // Reverse the password but don't change the token
         PasswordResetDto passwordResetDto = new PasswordResetDto();
-        passwordResetDto.setCurrentPassword("Not1CowAllowed!!!"); // Wrong password
-        passwordResetDto.setNewPassword("Is#1!ssJAVA_feb_2021");
-        passwordResetDto.setConfirmNewPassword("Is#1!ssJAVA_feb_2021");
+        passwordResetDto.setCurrentPassword(VALID_USER_PASSWORD);
+        passwordResetDto.setNewPassword(NEW_PASSWORD);
+        passwordResetDto.setConfirmNewPassword(NEW_PASSWORD);
         passwordResetDto.setToken("I'm not trying to hack your system. Nope, I'm not!");
         
-        uri = MAPPING_VALUE;
+        String uri = UPDATE_PASSWORD;
         
         String inputJson = mapper.writeValueAsString(passwordResetDto);
         // Throws error because the token was removed from the database already
@@ -260,6 +277,8 @@ public class PasswordResetControllerTest {
             .content(inputJson)
             .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest());
+        
+        assertThat(passwordEncoder.encode(VALID_USER_PASSWORD).matches(userRepository.findByUsername(VALID_USER_USERNAME).get().getPassword())); 
     }
     
     
@@ -267,9 +286,10 @@ public class PasswordResetControllerTest {
     public void resetPasswordTokenLinkHappyPath() throws Exception
     {
         // Create token
-        String uri = MAPPING_VALUE + "/reset-password-token-link/BSimpson";
+        String uri = GENERATE_TOKEN;
         mvc.perform(MockMvcRequestBuilders.get(uri)
                 .accept(MediaType.APPLICATION_JSON)
+                .content("{\"username\":\""+VALID_USER_USERNAME+"\"}")
                 .contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
                     .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))

@@ -83,12 +83,12 @@ public class AuthenticationControllerTest {
         userRepository.save(user);
     }
 	
-	
-	private final String MAPPING_VALUE = "/authentication";
+	private final String MAPPING_VALUE = "/users";
+    private final String AUTHENTICATE_USER = MAPPING_VALUE + "/credentails/authenticate";
 
 	@Test
 	public void authenticateUserHappyPath() throws Exception {
-		String uri = MAPPING_VALUE;
+		String uri = AUTHENTICATE_USER;
 		CredentialsDto credentialsDto = new CredentialsDto();
 		credentialsDto.setUsername("LSimpson");
 		credentialsDto.setPassword("Sax4Life!!!");
@@ -109,7 +109,7 @@ public class AuthenticationControllerTest {
 
 	@Test
 	public void authenticateUserNegativePathInactiveUser() throws Exception {
-		String uri = MAPPING_VALUE;
+		String uri = AUTHENTICATE_USER;
 		CredentialsDto credentialsDto = new CredentialsDto();
 		credentialsDto.setUsername("BSimpson");
 		credentialsDto.setPassword("Not1CowAllowed!!!");
@@ -128,7 +128,7 @@ public class AuthenticationControllerTest {
 
 	@Test
 	public void authenticateUserNegativePathUserNotExist() throws Exception {
-		String uri = MAPPING_VALUE;
+		String uri = AUTHENTICATE_USER;
 		CredentialsDto credentialsDto = new CredentialsDto();
 		credentialsDto.setUsername("HSimpson"); // not HSimpson doesn't exist
 		credentialsDto.setPassword("Not1CowAllowed!!!");
@@ -146,10 +146,10 @@ public class AuthenticationControllerTest {
 
 	@Test
 	public void authenticateUserNegativePathUserPasswordNotCorrect() throws Exception {
-		String uri = MAPPING_VALUE;
+		String uri = AUTHENTICATE_USER;
 		CredentialsDto credentialsDto = new CredentialsDto();
-		credentialsDto.setUsername("LSimpson"); // not HSimpson doesn't exist
-		credentialsDto.setPassword("All10CowsAllowed!!!");
+		credentialsDto.setUsername("LSimpson"); 
+		credentialsDto.setPassword("All10CowsAllowed!!!"); // user password not correct for LSimpson
 		
         String inputJson = mapper.writeValueAsString(credentialsDto);
         
