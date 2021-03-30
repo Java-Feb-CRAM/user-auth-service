@@ -26,18 +26,18 @@ public class PasswordResetDto {
     private String token;
 
     @NotNull
-    @Pattern(regexp = "${regex.password}")
-    @Size(min = 8, max = 32, message = "${message.password.invalid.size}")
+    @Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@!#$%^&*_+=~])[A-Za-z\\d@!#$%^&*_+=~]{8,32}$")
+    @Size(min = 8, max = 32)
     private String currentPassword;
 
     @NotNull
-    @Pattern(regexp = "${regex.password}")
-    @Size(min = 8, max = 32, message = "${message.password.invalid.size}")
+    @Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@!#$%^&*_+=~])[A-Za-z\\d@!#$%^&*_+=~]{8,32}$")
+    @Size(min = 8, max = 32, message = "New password must be between 8 to 32 characters.")
     private String newPassword;
 
     @NotNull
-    @Pattern(regexp = "${regex.password}")
-    @Size(min = 8, max = 32, message = "${message.password.invalid.size}")
+    @Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@!#$%^&*_+=~])[A-Za-z\\d@!#$%^&*_+=~]{8,32}$")
+    @Size(min = 8, max = 32)
     private String confirmNewPassword;
 
 }

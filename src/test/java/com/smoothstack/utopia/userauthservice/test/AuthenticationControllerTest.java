@@ -49,9 +49,12 @@ public class AuthenticationControllerTest {
     
     private ObjectMapper mapper;
     
+    private String AUTHENTICATE_USER;
+    
     @BeforeEach
     private void setupDatabase()
     {
+    	AUTHENTICATE_USER = "/users/credentails/authenticate";
         mapper = new ObjectMapper();
         userRepository.deleteAll();
         userRoleRepository.deleteAll(); 
@@ -82,9 +85,6 @@ public class AuthenticationControllerTest {
         user.setPassword(passwordEncoder.encode("Sax4Life!!!"));
         userRepository.save(user);
     }
-	
-	private final String MAPPING_VALUE = "/users";
-    private final String AUTHENTICATE_USER = MAPPING_VALUE + "/credentails/authenticate";
 
 	@Test
 	public void authenticateUserHappyPath() throws Exception {

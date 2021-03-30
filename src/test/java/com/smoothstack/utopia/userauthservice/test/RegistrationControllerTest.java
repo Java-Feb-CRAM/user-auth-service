@@ -102,12 +102,14 @@ public class RegistrationControllerTest {
         userRepository.save(user);
     }
     
-    private final String MAPPING_VALUE = "/registration";
+    private final String NEW_USER = "/users/new";
+    private final String GENERATE_TOKEN = "/users/usernames/tokens/generate";
+    private final String ACTIVATE_USER = "/users/useranames/tokens/activate";
     
     @Test
-    public void registerUserAccountHappyPath() throws Exception 
+    public void registerUserAccount_WithValidUserDto_Status201_AssertUserEntryAndPassword() throws Exception 
     {
-    	String uri = MAPPING_VALUE;
+    	String uri = NEW_USER;
 		
     	UserDto userDto = new UserDto();
     	userDto.setUsername("HSimpson");
@@ -127,14 +129,13 @@ public class RegistrationControllerTest {
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON_VALUE))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.accountVerificationToken").exists());
         assertThat(userDto.getGivenName().equals(userRepository.findByUsername("HSimpson").get().getGivenName()));
-        assertThat(passwordEncoder.encode(userDto.getUsername())
-        		.matches(userRepository.findByUsername("HSimpson").get().getPassword()));
+        assertThat(passwordEncoder.matches(userDto.getUsername(), userRepository.findByUsername("HSimpson").get().getPassword()));
     }
     
     @Test
-    public void registerUserAccountNegativePathNonJson() throws Exception 
+    public void registerUserAccount_WithInvalidMediaType_Status400() throws Exception 
     {
-    	String uri = MAPPING_VALUE;
+    	String uri = NEW_USER;
 		
     	UserDto userDto = new UserDto();
     	userDto.setUsername("HSimpson");
@@ -154,9 +155,9 @@ public class RegistrationControllerTest {
     
     
     @Test
-    public void registerUserAccountNegativePathPasswordMatchingFailed() throws Exception 
+    public void registerUserAccount_WithUnmatchingPasswords_Status409() throws Exception 
     {
-    	String uri = MAPPING_VALUE;
+    	String uri = NEW_USER;
 		
     	UserDto userDto = new UserDto();
     	userDto.setUsername("HSimpson");
@@ -176,9 +177,9 @@ public class RegistrationControllerTest {
     }
     
     @Test
-    public void registerUserAccountNegativePathUserExists() throws Exception 
+    public void registerUserAccount_WithExistingUser_Status409_AssertThatUserExists() throws Exception 
     {
-    	String uri = MAPPING_VALUE;
+    	String uri = NEW_USER;
 		
     	UserDto userDto = new UserDto();
     	userDto.setUsername("BSimpson"); // username already taken
@@ -199,9 +200,9 @@ public class RegistrationControllerTest {
     }
     
     @Test
-    public void registerUserAccountNegativePathPasswordFormatWrong() throws Exception 
+    public void registerUserAccount_WithInvalidPasswordFormat_Status400() throws Exception 
     {
-    	String uri = MAPPING_VALUE;
+    	String uri = NEW_USER;
 		
     	UserDto userDto = new UserDto();
     	userDto.setUsername("HSimpson");
@@ -221,9 +222,9 @@ public class RegistrationControllerTest {
     }
     
     @Test
-    public void registerUserAccountNegativePathEmailInUseAlready() throws Exception 
+    public void registerUserAccount_WithExistingEmail_Status409() throws Exception 
     {
-    	String uri = MAPPING_VALUE;
+    	String uri = NEW_USER;
 		
     	UserDto userDto = new UserDto();
     	userDto.setUsername("HSimpson");
@@ -231,7 +232,7 @@ public class RegistrationControllerTest {
     	userDto.setEmail("test@ss.com"); // BSimpson's email
     	userDto.setFamilyName("Simpson");
         userDto.setGivenName("Homer");
-        userDto.setPassword("Smrt123!"); // needs special character
+        userDto.setPassword("Smrt123!");
         userDto.setMatchingPassword("Smrt123!");
         String inputJson = mapper.writeValueAsString(userDto);
 
@@ -243,9 +244,9 @@ public class RegistrationControllerTest {
     }
     
     @Test
-    public void registerUserAccountNegativePathUserExistsWithLowercaseUsername() throws Exception 
+    public void registerUserAccount_WithExistingUsernameMatchingLowercase_Status409_AssertUserExistsByUsername() throws Exception 
     {
-    	String uri = MAPPING_VALUE;
+    	String uri = NEW_USER;
 		
     	UserDto userDto = new UserDto();
     	userDto.setUsername("bsimpson"); // BSimpson exists, so bsimpson should be protected too
@@ -266,70 +267,61 @@ public class RegistrationControllerTest {
     }
     
     @Test
-	public void recreateVerificationTokenHappyPath() throws Exception {
-		String uri = MAPPING_VALUE + "/user-account-verification-token-resend/BSimpson";
-        mvc.perform(MockMvcRequestBuilders.get(uri)
+	public void generateVerificationToken_WithValidUsername_Status201() throws Exception {
+		String uri = GENERATE_TOKEN;
+        mvc.perform(MockMvcRequestBuilders.post(uri)
                 .accept(MediaType.APPLICATION_JSON)
+                .content("{\"username\":\"BSimpson\"}")
                 .contentType(MediaType.APPLICATION_JSON))
-                    .andExpect(status().isOk())
+                    .andExpect(status().isCreated())
                     .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                     .andExpect(MockMvcResultMatchers.jsonPath("$.token").exists());
 	}
     
     @Test
-    public void recreateVerificationTokenHappyPathTokenExistsForUser() throws Exception 
+    public void generateVerificationToken_WithValidUsername_DeleteExistingTokenAndGenerateNew_Status201_AssertOldTokenDoesNotMatchNewToken() throws Exception 
     {
-    	String uri = MAPPING_VALUE;
+		String uri = GENERATE_TOKEN;
 		
-    	UserDto userDto = new UserDto();
-    	userDto.setUsername("HSimpson");
-    	userDto.setPhone("18887776666");
-    	userDto.setEmail("sub@sandwitch.ahhhggmmmnnn.nom");
-    	userDto.setFamilyName("Simpson");
-        userDto.setGivenName("Homer");
-        userDto.setPassword("Smrt123!");
-        userDto.setMatchingPassword("Smrt123!");
-        String inputJson = mapper.writeValueAsString(userDto);
-        
-        MvcResult mvcResult = mvc.perform(MockMvcRequestBuilders.post(uri)
-            .accept(MediaType.APPLICATION_JSON)
-            .content(inputJson)
-            .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isCreated())
-                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON_VALUE))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.accountVerificationToken").exists()).andReturn();
-        String token = mapper.readTree(mvcResult.getResponse().getContentAsString()).get("accountVerificationToken").asText();        
-        
-        assertThat(userDto.getGivenName().equals(userRepository.findByUsername("HSimpson").get().getGivenName()));
-        assertThat(passwordEncoder.matches(userDto.getUsername(), userRepository.findByUsername("HSimpson").get().getPassword()));
-        
-		uri = MAPPING_VALUE + "/user-account-verification-token-resend/HSimpson";
-		
-		mvcResult = mvc.perform(MockMvcRequestBuilders.get(uri)
+		MvcResult mvcResult = mvc.perform(MockMvcRequestBuilders.post(uri)
                 .accept(MediaType.APPLICATION_JSON)
+                .content("{\"username\":\"BSimpson\"}")
                 .contentType(MediaType.APPLICATION_JSON))
-                    .andExpect(status().isOk())
+                    .andExpect(status().isCreated())
+                    .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                    .andExpect(MockMvcResultMatchers.jsonPath("$.token").exists()).andReturn();
+		String token = mapper.readTree(mvcResult.getResponse().getContentAsString()).get("token").asText();
+        
+		uri = GENERATE_TOKEN;
+		
+		mvcResult = mvc.perform(MockMvcRequestBuilders.post(uri)
+                .accept(MediaType.APPLICATION_JSON)
+                .content("{\"username\":\"BSimpson\"}")
+                .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isCreated())
                     .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                     .andExpect(MockMvcResultMatchers.jsonPath("$.token").exists()).andReturn();
         assertFalse(token.equals(mapper.readTree(mvcResult.getResponse().getContentAsString()).get("token").asText()));
     }
     
     @Test
-	public void recreateVerificationTokenNegativePath() throws Exception {
-		String uri = MAPPING_VALUE + "/user-account-verification-token-resend/HSimpson"; // username does not exist
-        mvc.perform(MockMvcRequestBuilders.get(uri)
+	public void generateVerificationToken_WithInvalidUsername_Status400() throws Exception {
+		String uri = GENERATE_TOKEN; 
+        mvc.perform(MockMvcRequestBuilders.post(uri)
                 .accept(MediaType.APPLICATION_JSON)
+                .content("{\"username\":\"HSimpson\"}") // username does not exist
                 .contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isBadRequest());
 	}
 
     @Test
-	public void verifyUserAccountHappyPathHappyPath() throws Exception {
-		String uri = MAPPING_VALUE + "/user-account-verification-token-resend/BSimpson";
-        MvcResult mvcResult = mvc.perform(MockMvcRequestBuilders.get(uri)
+	public void verifyUserAccount_WithValidToken_AssertNotActiveAccount_VerifyUser_Status200_AssertTokenWasRemovedAndThatUserIsActive() throws Exception {
+		String uri = GENERATE_TOKEN;
+        MvcResult mvcResult = mvc.perform(MockMvcRequestBuilders.post(uri)
                 .accept(MediaType.APPLICATION_JSON)
+                .content("{\"username\":\"BSimpson\"}")
                 .contentType(MediaType.APPLICATION_JSON))
-                    .andExpect(status().isOk())
+                    .andExpect(status().isCreated())
                     .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                     .andExpect(MockMvcResultMatchers.jsonPath("$.token").exists()).andReturn();
         String token = mapper.readTree(mvcResult.getResponse().getContentAsString()).get("token").asText();
@@ -340,9 +332,10 @@ public class RegistrationControllerTest {
         		.getUser()
         		.isActive());
         
-        uri = MAPPING_VALUE + "/account-activation/" + token;
-        mvcResult = mvc.perform(MockMvcRequestBuilders.get(uri)
+        uri = ACTIVATE_USER;
+        mvcResult = mvc.perform(MockMvcRequestBuilders.post(uri)
                 .accept(MediaType.APPLICATION_JSON)
+                .content("{\"token\":\""+token+"\"}")
                 .contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
                     .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
@@ -355,21 +348,23 @@ public class RegistrationControllerTest {
 	}
     
     @Test
-	public void verifyUserAccountHappyPathNegativePath() throws Exception {
-		String uri = MAPPING_VALUE + "/user-account-verification-token-resend/LSimpson";
-        MvcResult mvcResult = mvc.perform(MockMvcRequestBuilders.get(uri)
+	public void verifyUserAccount_WithAlreadyActiveUser_Status200() throws Exception {
+		String uri = GENERATE_TOKEN;
+        MvcResult mvcResult = mvc.perform(MockMvcRequestBuilders.post(uri)
                 .accept(MediaType.APPLICATION_JSON)
+                .content("{\"username\":\"LSimpson\"}")
                 .contentType(MediaType.APPLICATION_JSON))
-                    .andExpect(status().isOk())
+                    .andExpect(status().isCreated())
                     .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                     .andExpect(MockMvcResultMatchers.jsonPath("$.token").exists()).andReturn();
         String token = mapper.readTree(mvcResult.getResponse().getContentAsString()).get("token").asText();
 
         assertThat(userRepository.findByUsername("LSimpson").get().isActive());
         
-        uri = MAPPING_VALUE + "/account-activation/" + token;
-        mvcResult = mvc.perform(MockMvcRequestBuilders.get(uri)
+        uri = ACTIVATE_USER;
+        mvcResult = mvc.perform(MockMvcRequestBuilders.post(uri)
                 .accept(MediaType.APPLICATION_JSON)
+                .content("{\"token\":\""+token+"\"}")
                 .contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
                     .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
@@ -382,12 +377,13 @@ public class RegistrationControllerTest {
 	}
     
     @Test
-	public void verifyUserAccountNegativePath() throws Exception {
-		String uri = MAPPING_VALUE + "/user-account-verification-token-resend/BSimpson";
-        MvcResult mvcResult = mvc.perform(MockMvcRequestBuilders.get(uri)
+	public void verifyUserAccount_WithExpiredToken_Status400_AssertTokenRemovedAndUserWasNotActivated() throws Exception {
+		String uri = GENERATE_TOKEN;
+        MvcResult mvcResult = mvc.perform(MockMvcRequestBuilders.post(uri)
                 .accept(MediaType.APPLICATION_JSON)
+                .content("{\"username\":\"BSimpson\"}")
                 .contentType(MediaType.APPLICATION_JSON))
-                    .andExpect(status().isOk())
+                    .andExpect(status().isCreated())
                     .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                     .andExpect(MockMvcResultMatchers.jsonPath("$.token").exists()).andReturn();
         String token = mapper.readTree(mvcResult.getResponse().getContentAsString()).get("token").asText();
@@ -397,9 +393,10 @@ public class RegistrationControllerTest {
         verificationToken.setExpiryDate(LocalDateTime.now().minus(Duration.ofDays(1)));
         verificationTokenRepository.save(verificationToken);
         
-        uri = MAPPING_VALUE + "/account-activation/" + token;
-        mvc.perform(MockMvcRequestBuilders.get(uri)
+        uri = ACTIVATE_USER;
+        mvc.perform(MockMvcRequestBuilders.post(uri)
                 .accept(MediaType.APPLICATION_JSON)
+                .content("{\"token\":\""+token+"\"}")
                 .contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isBadRequest());
         

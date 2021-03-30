@@ -45,7 +45,6 @@ public class PasswordResetControllerTest {
     @Autowired
     MockMvc mvc;
 
-    
     @Autowired
     private UserRepository userRepository;
     @Autowired
@@ -56,16 +55,21 @@ public class PasswordResetControllerTest {
     private PasswordEncoder passwordEncoder;
     
     private ObjectMapper mapper;
-    
-    private final String VALID_USER_PASSWORD = "Not1CowAllowed!!!";
-    private final String VALID_USER_USERNAME = "BSimpson";
-    private final String INVALID_USER_PASSWORD = "Only1CowAllowed!!!";
-    private final String NEW_PASSWORD = "Is#1!ssJAVA_feb_2021";
-    private final String UNMATCHING_PASSWORD = "Is#1!ssJAVA_feb_2019";
+
+	private final String VALID_USER_PASSWORD = "Not1CowAllowed!!!";
+	private final String VALID_USER_USERNAME = "BSimpson";
+	private final String INVALID_USER_PASSWORD = "Only1CowAllowed!!!";
+	private final String INVALID_USER_USERNAME = "BSIMPSONNN";
+	private final String NEW_PASSWORD = "Is#1!ssJAVA_feb_2021";
+	private final String UNMATCHING_PASSWORD = "Is#1!ssJAVA_feb_2019";
+	private final String UPDATE_PASSWORD = "/users/password/new";
+	private final String GENERATE_TOKEN = "/users/password/tokens/generate";
+	private final String CONFIRM_TOKEN = "/users/password/tokens/confirm";  
     
     @BeforeEach
     private void setupDatabase()
     {
+    	
         mapper = new ObjectMapper();
         passwordResetTokenRepository.deleteAll();
         userRepository.deleteAll();
@@ -86,11 +90,6 @@ public class PasswordResetControllerTest {
         user.setPassword(passwordEncoder.encode(VALID_USER_PASSWORD));
         userRepository.save(user);
     }
-
-    private final String MAPPING_VALUE = "/users";
-    private final String UPDATE_PASSWORD = MAPPING_VALUE + "/password/new";
-    private final String GENERATE_TOKEN = MAPPING_VALUE + "/password/tokens/generate";
-    private final String CONFIRM_TOKEN = MAPPING_VALUE + "/password/tokens/confirm";
     
     @Test
     public void changeUserPassword_WithGeneratedTokenFromExistingUsername_UpdateValidPassword_Status200_AssertChangedPassword() throws Exception
@@ -283,78 +282,87 @@ public class PasswordResetControllerTest {
     
     
     @Test
-    public void resetPasswordTokenLinkHappyPath() throws Exception
+    public void generatePasswordResetToken_WithValidUsername_Status201_ReturnGeneratedToken_AssertTokenExistsInDatabase() throws Exception
     {
-        // Create token
         String uri = GENERATE_TOKEN;
-        mvc.perform(MockMvcRequestBuilders.get(uri)
+        mvc.perform(MockMvcRequestBuilders.post(uri)
                 .accept(MediaType.APPLICATION_JSON)
                 .content("{\"username\":\""+VALID_USER_USERNAME+"\"}")
                 .contentType(MediaType.APPLICATION_JSON))
-                    .andExpect(status().isOk())
+                    .andExpect(status().isCreated())
                     .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                     .andExpect(MockMvcResultMatchers.jsonPath("$.token").exists());
     }
     
     @Test
-    public void resetPasswordTokenLinkNegativePathUsernameNotExists() throws Exception
+    public void generatePasswordResetToken_WithInvalidUsername_DoNotGenerateToken_Status400_AssertNoTokenGenerated() throws Exception
     {        
-        String uri = MAPPING_VALUE + "/reset-password-token-link/BSimpsonnnnn"; // username does not exist     
-        mvc.perform(MockMvcRequestBuilders.get(uri)
+        String uri = GENERATE_TOKEN;    
+        mvc.perform(MockMvcRequestBuilders.post(uri)
         		.accept(MediaType.APPLICATION_JSON)
+                .content("{\"username\":\""+INVALID_USER_USERNAME+"\"}") // username doesn't exist in database
                 .contentType(MediaType.APPLICATION_JSON))
         			.andExpect(status().isBadRequest());
+        
+        assertThat(userRepository.findByUsername(INVALID_USER_USERNAME).isEmpty());
     }
     
     @Test
-    public void resetPasswordTokenLinkHappyPathCreatedMultipletimes() throws Exception
+    public void generatePasswordResetToken_GenerateTokenForUsername_GenerateAnotherTokenForSameUsername_TokenAlreadyExists_DeleteOldTokenAndGenerateNewToken_Status201_ReturnGeneratedToken_AssertOnlyOneTokenExistsInDatabaseForUsername() throws Exception
     {
-        // Create token
-        String uri = MAPPING_VALUE + "/reset-password-token-link/BSimpson";
-        mvc.perform(MockMvcRequestBuilders.get(uri)
+        // Generate token
+        String uri = GENERATE_TOKEN;
+        mvc.perform(MockMvcRequestBuilders.post(uri)
                 .accept(MediaType.APPLICATION_JSON)
+                .content("{\"username\":\""+VALID_USER_USERNAME+"\"}")
                 .contentType(MediaType.APPLICATION_JSON))
-                    .andExpect(status().isOk())
+                    .andExpect(status().isCreated())
                     .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                     .andExpect(MockMvcResultMatchers.jsonPath("$.token").exists());        
 
-        // Create token again
-        mvc.perform(MockMvcRequestBuilders.get(uri)
+        // Generate token again
+        mvc.perform(MockMvcRequestBuilders.post(uri)
                 .accept(MediaType.APPLICATION_JSON)
+                .content("{\"username\":\""+VALID_USER_USERNAME+"\"}")
                 .contentType(MediaType.APPLICATION_JSON))
-                    .andExpect(status().isOk())
+                    .andExpect(status().isCreated())
                     .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                     .andExpect(MockMvcResultMatchers.jsonPath("$.token").exists());
+
+        assertThat(passwordResetTokenRepository.findAllByUser(userRepository.findByUsername(VALID_USER_USERNAME).get()).size() == 1);
     }
     
     @Test
-    public void resetPasswordTokenLinkNegativePath() throws Exception
+    public void generatePasswordResetToken_NoUsernameSent_DoNotGenerateToken_Status400() throws Exception
     {
         // Create token
-        String uri = MAPPING_VALUE + "/reset-password-token-link/notBsimpson";
-        mvc.perform(MockMvcRequestBuilders.get(uri)
+        String uri = GENERATE_TOKEN;
+        mvc.perform(MockMvcRequestBuilders.post(uri)
                 .accept(MediaType.APPLICATION_JSON)
+                // No content sent
                 .contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isBadRequest());
     }
 
     @Test
-    public void confirmPasswordTokenHappyPath() throws Exception
+    public void confirmPasswordToken_GenerateTokenWithValidUsername_ConfirmTokenGenerated_UpdatePasswordInDatabase_Status200_AssertSavedTokenMatchesGeneratedToken() throws Exception
     {
-        // Get created token
-        String uri = MAPPING_VALUE + "/reset-password-token-link/BSimpson";
-        MvcResult mvcResult = mvc.perform(MockMvcRequestBuilders.get(uri)
+        // Generate token
+        String uri = GENERATE_TOKEN;
+        MvcResult mvcResult = mvc.perform(MockMvcRequestBuilders.post(uri)
                 .accept(MediaType.APPLICATION_JSON)
+                .content("{\"username\":\""+VALID_USER_USERNAME+"\"}")
                 .contentType(MediaType.APPLICATION_JSON))
-                    .andExpect(status().isOk())
+                    .andExpect(status().isCreated())
                     .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                     .andExpect(MockMvcResultMatchers.jsonPath("$.token").exists()).andReturn();
         String token = mapper.readTree(mvcResult.getResponse().getContentAsString()).get("token").asText();
         
         // Confirm token
-        uri = MAPPING_VALUE + "/confirm-password-token/" + token;
-        mvc.perform(MockMvcRequestBuilders.get(uri)
+        uri = CONFIRM_TOKEN;
+        mvc.perform(MockMvcRequestBuilders.post(uri)
                 .accept(MediaType.APPLICATION_JSON)
+                .content("{\"token\":\""+token+"\"}")
                 .contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
                     .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
@@ -363,14 +371,15 @@ public class PasswordResetControllerTest {
     }
 
     @Test
-    public void confirmPasswordNegativePathExpiredToken() throws Exception
+    public void confirmPassword_GenerateTokenWithValidUsername_ExpireToken_TokenExpiredAndCannotConfirm_Status400_AssertNoTokenExistsInDatabaseForUsername() throws Exception
     {        
-        // Get created token
-        String uri = MAPPING_VALUE + "/reset-password-token-link/BSimpson";
-        MvcResult mvcResult = mvc.perform(MockMvcRequestBuilders.get(uri)
+        // Generate token
+        String uri = GENERATE_TOKEN;
+        MvcResult mvcResult = mvc.perform(MockMvcRequestBuilders.post(uri)
                 .accept(MediaType.APPLICATION_JSON)
+                .content("{\"username\":\""+VALID_USER_USERNAME+"\"}")
                 .contentType(MediaType.APPLICATION_JSON))
-                    .andExpect(status().isOk())
+                    .andExpect(status().isCreated())
                     .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                     .andExpect(MockMvcResultMatchers.jsonPath("$.token").exists()).andReturn();
         String token = mapper.readTree(mvcResult.getResponse().getContentAsString()).get("token").asText();
@@ -381,10 +390,13 @@ public class PasswordResetControllerTest {
         passwordResetTokenRepository.save(passwordResetToken);
         
         // Confirm token is expired
-        uri = MAPPING_VALUE + "/confirm-password-token/" + token; // Expired token passed
-        mvc.perform(MockMvcRequestBuilders.get(uri)
+        uri = CONFIRM_TOKEN; 
+        mvc.perform(MockMvcRequestBuilders.post(uri)
                 .accept(MediaType.APPLICATION_JSON)
+                .content("{\"token\":\""+token+"\"}") // Expired token, cannot confirm
                 .contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isBadRequest());
+        
+        assertThat(passwordResetTokenRepository.findAllByUser(userRepository.findByUsername(VALID_USER_USERNAME).get()).size() == 0);
     }
 }

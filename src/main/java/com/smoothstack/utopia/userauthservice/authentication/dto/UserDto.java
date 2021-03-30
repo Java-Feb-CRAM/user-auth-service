@@ -22,33 +22,33 @@ import lombok.Setter;
 @Getter
 @Setter
 public class UserDto {
-    @NotNull(message = "${message.username.null}")
-    @Pattern(regexp = "${regex.username}")
-    @Size(min = 8, max = 32, message = "${message.username.invalid.size}")
+    @NotNull(message = "Username is required.")
+    @Pattern(regexp = "^[a-zA-Z]+[a-zA-Z\\d_]+$")
+    @Size(min = 8, max = 32, message = "Username must be between 8 and 32 characters.")
     private String username;
 
-    @NotNull(message = "${message.phone.null}")
-    @Size(min = 10, max = 16, message = "${message.phone.invalid.size}")
+    @NotNull(message = "Phone number is required.")
+    @Size(min = 10, max = 16, message = "Phone number must be between 10 to 16 characters.")
     private String phone;
 
-    @NotNull(message = "${message.email.null}")
+    @NotNull(message = "Email is required.")
     @Email
     private String email;
 
-    @NotNull(message = "${message.name.family.null}")
-    @Size(min = 1, max = 32, message = "${message.name.family.invalid.size}")
+    @NotNull(message = "Family name is required.")
+    @Size(min = 1, max = 32, message = "Family name must be between 1 and 32 characters.")
     private String familyName;
 
-    @NotNull(message = "${message.name.given.null}")
-    @Size(min = 1, max = 32, message = "${message.name.given.invalid.size}")
+    @NotNull(message = "Given name is required.")
+    @Size(min = 1, max = 32, message = "Given name must be between 1 and 32 characters.")
     private String givenName;
 
-    @NotNull(message = "${message.password.null}")
-    @Pattern(regexp = "${regex.password}")
-    @Size(min = 8, max = 32, message = "${message.password.invalid.size}")
+    @NotNull(message = "Password is required.")
+    @Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@!#$%^&*_+=~])[A-Za-z\\d@!#$%^&*_+=~]{8,32}$")
+    @Size(min = 8, max = 32, message = "Password must be between 8 to 32 characters.")
     private String password;
 
-    @NotNull(message = "${message.password.matching.null}")
-    @Size(min = 8, max = 32, message = "${message.password.matching.invalid.size}")
+    @NotNull(message = "Matching password is required.")
+    @Size(min = 8, max = 32, message = "Cannot match password with invalid size of characters.")
     private String matchingPassword;
 }

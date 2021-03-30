@@ -5,7 +5,6 @@ import java.util.Map;
 import java.util.UUID;
 
 import javax.validation.Valid;
-import javax.validation.constraints.Pattern;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -13,7 +12,6 @@ import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -32,7 +30,6 @@ public class RegistrationController {
     @Autowired
     private UserService userService;
 
-    private final String USERNAME_REGEX = "${regex.username}"; // From custom.properties resource
     private final String MAPPING_VALUE = "/users";
     private final String NEW_USER = MAPPING_VALUE + "/new";
     private final String GENERATE_TOKEN = MAPPING_VALUE + "/usernames/tokens/generate";
@@ -57,20 +54,20 @@ public class RegistrationController {
     @PostMapping(path = GENERATE_TOKEN) // posting sensitive user details
     @ResponseStatus(HttpStatus.CREATED) // Creates a new token and adds it to the database, so 201 is the correct response
     public Map<String,String> generateVerificationToken(
-    		@Pattern(regexp = USERNAME_REGEX) @RequestParam("username") String username)
+    		@RequestBody Map<String,String> usernameMap)
     {
         String token = UUID.randomUUID().toString(); // Generate token
         // Deletes old token and creates a new token in database for username
-        userService.createVerificationTokenForUser(token, username); 
+        userService.createVerificationTokenForUser(token, usernameMap.get("username")); 
         return Collections.singletonMap("token", token); // Return token as a singleton map to be serialized to json
     }
 
     // User activation with token confirmation
     @PostMapping(path = ACTIVATE_USER) // posting sensitive user details
-    public Map<String,String> verifyUserAccount(@RequestParam("token") String token)
+    public Map<String,String> verifyUserAccount(@RequestBody Map<String,String> tokenMap)
     {
     	// Validate and return message for status 200
-        if (userService.validateUserAccountVerificationToken(token))
+        if (userService.validateUserAccountVerificationToken(tokenMap.get("token")))
         {
         	return Collections.singletonMap("message", "user-activated");
         }

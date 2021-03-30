@@ -8,14 +8,14 @@ import java.util.Map;
 import java.util.UUID;
 
 import javax.validation.Valid;
-import javax.validation.constraints.Pattern;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.smoothstack.utopia.userauthservice.authentication.dto.PasswordResetDto;
@@ -31,12 +31,10 @@ import com.smoothstack.utopia.userauthservice.authentication.service.UserService
 public class PasswordResetController {
 	@Autowired
 	private UserService userService;
-
-    private final String USERNAME_REGEX = "${regex.username}"; // From custom.properties resource
-    private final String MAPPING_VALUE = "/users";
-    private final String NEW_PASSWORD = MAPPING_VALUE + "/password/new";
-    private final String GENERATE_TOKEN = MAPPING_VALUE + "/password/tokens/generate";
-    private final String CONFIRM_TOKEN = MAPPING_VALUE + "/password/tokens/confirm";
+	
+    private final String NEW_PASSWORD = "/users/password/new";
+    private final String GENERATE_TOKEN = "/users/password/tokens/generate";
+    private final String CONFIRM_TOKEN = "/users/password/tokens/confirm";
 
 	// Change user password
 	@PostMapping(value = NEW_PASSWORD)
@@ -47,19 +45,19 @@ public class PasswordResetController {
 
 	// Generate password reset token
 	@PostMapping(path = GENERATE_TOKEN)
-	public Map<String, String> generatePasswordResetToken(
-			@Pattern(regexp = USERNAME_REGEX) @RequestParam("username") String username) {
+	@ResponseStatus(HttpStatus.CREATED)
+	public Map<String, String> generatePasswordResetToken(@RequestBody Map<String,String> usernameMap) {
 		String token = UUID.randomUUID().toString(); // Generate new token
-		userService.createPasswordResetTokenForUser(token, username); // Save token
+		userService.createPasswordResetTokenForUser(token, usernameMap.get("username")); // Save token
 		return Collections.singletonMap("token", token); // Return token
 	}
 
 	// Confirm password token
 	@PostMapping(path = CONFIRM_TOKEN)
-	public Map<String, String> confirmPasswordToken(@RequestParam("token") String token) {
-		if (!userService.validatePasswordResetToken(token)) {
+	public Map<String, String> confirmPasswordToken(@RequestBody Map<String,String> tokenMap) {
+		if (!userService.validatePasswordResetToken(tokenMap.get("token"))) {
 			throw new PasswordResetTokenExpiredException();
 		}
-		return Collections.singletonMap("token", token);
+		return Collections.singletonMap("token", tokenMap.get("token"));
 	}
 }
