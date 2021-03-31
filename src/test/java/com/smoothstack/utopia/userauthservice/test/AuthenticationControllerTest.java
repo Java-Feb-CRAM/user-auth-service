@@ -36,7 +36,7 @@ import com.smoothstack.utopia.userauthservice.dao.UserRoleRepository;
 @TestPropertySource(
   locations = "classpath:application-integrationtest.properties"
 )
-public class AuthenticationController {
+public class AuthenticationControllerTest {
     @Autowired
     MockMvc mvc;
 
@@ -49,9 +49,12 @@ public class AuthenticationController {
     
     private ObjectMapper mapper;
     
+    private String AUTHENTICATE_USER;
+    
     @BeforeEach
     private void setupDatabase()
     {
+    	AUTHENTICATE_USER = "/users/credentails/authenticate";
         mapper = new ObjectMapper();
         userRepository.deleteAll();
         userRoleRepository.deleteAll(); 
@@ -82,13 +85,10 @@ public class AuthenticationController {
         user.setPassword(passwordEncoder.encode("Sax4Life!!!"));
         userRepository.save(user);
     }
-	
-	
-	private final String MAPPING_VALUE = "/authentication";
 
 	@Test
 	public void authenticateUserHappyPath() throws Exception {
-		String uri = MAPPING_VALUE;
+		String uri = AUTHENTICATE_USER;
 		CredentialsDto credentialsDto = new CredentialsDto();
 		credentialsDto.setUsername("LSimpson");
 		credentialsDto.setPassword("Sax4Life!!!");
@@ -109,7 +109,7 @@ public class AuthenticationController {
 
 	@Test
 	public void authenticateUserNegativePathInactiveUser() throws Exception {
-		String uri = MAPPING_VALUE;
+		String uri = AUTHENTICATE_USER;
 		CredentialsDto credentialsDto = new CredentialsDto();
 		credentialsDto.setUsername("BSimpson");
 		credentialsDto.setPassword("Not1CowAllowed!!!");
@@ -128,7 +128,7 @@ public class AuthenticationController {
 
 	@Test
 	public void authenticateUserNegativePathUserNotExist() throws Exception {
-		String uri = MAPPING_VALUE;
+		String uri = AUTHENTICATE_USER;
 		CredentialsDto credentialsDto = new CredentialsDto();
 		credentialsDto.setUsername("HSimpson"); // not HSimpson doesn't exist
 		credentialsDto.setPassword("Not1CowAllowed!!!");
@@ -146,10 +146,10 @@ public class AuthenticationController {
 
 	@Test
 	public void authenticateUserNegativePathUserPasswordNotCorrect() throws Exception {
-		String uri = MAPPING_VALUE;
+		String uri = AUTHENTICATE_USER;
 		CredentialsDto credentialsDto = new CredentialsDto();
-		credentialsDto.setUsername("LSimpson"); // not HSimpson doesn't exist
-		credentialsDto.setPassword("All10CowsAllowed!!!");
+		credentialsDto.setUsername("LSimpson"); 
+		credentialsDto.setPassword("All10CowsAllowed!!!"); // user password not correct for LSimpson
 		
         String inputJson = mapper.writeValueAsString(credentialsDto);
         
@@ -157,9 +157,7 @@ public class AuthenticationController {
             .accept(MediaType.APPLICATION_JSON)
             .content(inputJson)
             .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isBadRequest())
-                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON_VALUE))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.authenticated-jwt").exists());
+                .andExpect(status().isBadRequest());
 
         assertThat(userRepository.findByUsername("LSimpson").get().isActive());
         assertFalse(passwordEncoder.encode("All10CowsAllowed!!!").matches(userRepository.findByUsername("LSimpson").get().getPassword()));

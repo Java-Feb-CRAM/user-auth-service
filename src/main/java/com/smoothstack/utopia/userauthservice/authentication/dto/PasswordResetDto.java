@@ -27,17 +27,17 @@ public class PasswordResetDto {
 
     @NotNull
     @Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@!#$%^&*_+=~])[A-Za-z\\d@!#$%^&*_+=~]{8,32}$")
-    @Size(min = 8, max = 32, message = "Password must be between 8 to 32 characters")
+    @Size(min = 8, max = 32)
     private String currentPassword;
 
     @NotNull
     @Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@!#$%^&*_+=~])[A-Za-z\\d@!#$%^&*_+=~]{8,32}$")
-    @Size(min = 8, max = 32, message = "Password must be between 8 to 32 characters")
+    @Size(min = 8, max = 32, message = "New password must be between 8 to 32 characters.")
     private String newPassword;
 
     @NotNull
     @Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@!#$%^&*_+=~])[A-Za-z\\d@!#$%^&*_+=~]{8,32}$")
-    @Size(min = 8, max = 32, message = "Password must be between 8 to 32 characters")
+    @Size(min = 8, max = 32)
     private String confirmNewPassword;
 
 }
