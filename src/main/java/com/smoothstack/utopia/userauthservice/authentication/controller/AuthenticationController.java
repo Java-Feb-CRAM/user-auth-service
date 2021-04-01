@@ -26,7 +26,7 @@ public class AuthenticationController {
 	@Autowired
 	private UserService userService;
 
-    private final String AUTHENTICATE_USER = "/users/credentails/authenticate";
+    private final String AUTHENTICATE_USER = "/users/credentials/authenticate";
 
 	@PostMapping(path = AUTHENTICATE_USER, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
 	public Map<String, String> authenticateUser(@Valid @RequestBody CredentialsDto credentialsDto) {
