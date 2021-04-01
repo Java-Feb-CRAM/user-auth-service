@@ -26,11 +26,10 @@ public class AuthenticationController {
 	@Autowired
 	private UserService userService;
 
-	private final String MAPPING_VALUE = "/users";
-    private final String AUTHENTICATE_USER = MAPPING_VALUE + "/credentails/authenticate";
+    private final String AUTHENTICATE_USER = "/users/credentails/authenticate";
 
 	@PostMapping(path = AUTHENTICATE_USER, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
 	public Map<String, String> authenticateUser(@Valid @RequestBody CredentialsDto credentialsDto) {
-		return Collections.singletonMap("authenticated-jwt", userService.authenticateUser(credentialsDto));
+		return Collections.singletonMap("authenticatedJwt", userService.authenticateUser(credentialsDto));
 	}
 }
