@@ -11,8 +11,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.time.Duration;
 import java.time.LocalDateTime;
 
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -42,6 +45,7 @@ import com.smoothstack.utopia.userauthservice.dao.VerificationTokenRepository;
 @TestPropertySource(
   locations = "classpath:application-integrationtest.properties"
 )
+@TestInstance(Lifecycle.PER_CLASS)
 public class RegistrationControllerTest {
     @Autowired
     MockMvc mvc;
@@ -100,6 +104,14 @@ public class RegistrationControllerTest {
         user.setUserRole(userRole);
         user.setPassword(passwordEncoder.encode("Sax4Life!!!"));
         userRepository.save(user);
+    }
+    
+    @AfterAll
+    private void clearDatabase()
+    {
+        verificationTokenRepository.deleteAll();
+        userRepository.deleteAll();
+        userRoleRepository.deleteAll();     	
     }
     
     private final String NEW_USER = "/users/new";

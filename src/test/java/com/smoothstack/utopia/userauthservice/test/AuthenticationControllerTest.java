@@ -8,8 +8,11 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -36,6 +39,7 @@ import com.smoothstack.utopia.userauthservice.dao.UserRoleRepository;
 @TestPropertySource(
   locations = "classpath:application-integrationtest.properties"
 )
+@TestInstance(Lifecycle.PER_CLASS)
 public class AuthenticationControllerTest {
     @Autowired
     MockMvc mvc;
@@ -54,7 +58,7 @@ public class AuthenticationControllerTest {
     @BeforeEach
     private void setupDatabase()
     {
-    	AUTHENTICATE_USER = "/users/credentails/authenticate";
+    	AUTHENTICATE_USER = "/users/credentials/authenticate";
         mapper = new ObjectMapper();
         userRepository.deleteAll();
         userRoleRepository.deleteAll(); 
@@ -86,6 +90,14 @@ public class AuthenticationControllerTest {
         userRepository.save(user);
     }
 
+
+    @AfterAll
+    private void clearDatabase()
+    {
+        userRepository.deleteAll();
+        userRoleRepository.deleteAll();     	
+    }
+    
 	@Test
 	public void authenticateUserHappyPath() throws Exception {
 		String uri = AUTHENTICATE_USER;
@@ -101,7 +113,7 @@ public class AuthenticationControllerTest {
             .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON_VALUE))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.authenticated-jwt").exists());
+                .andExpect(MockMvcResultMatchers.jsonPath("$.authenticatedJwt").exists());
 
         assertThat(userRepository.findByUsername("LSimpson").get().isActive());
         assertThat(passwordEncoder.matches("Sax4Life!!!", userRepository.findByUsername("LSimpson").get().getPassword()));
