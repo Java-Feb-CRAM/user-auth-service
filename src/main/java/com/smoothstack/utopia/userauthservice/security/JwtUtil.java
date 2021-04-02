@@ -56,9 +56,4 @@ public class JwtUtil implements Serializable {
 			throw new InvalidCredentialsException();
 		}
 	}
-	
-	public String getUsernameFromJwt(String jwt)
-	{
-		return Jwts.parser().setSigningKey(jwtSecret).parseClaimsJws(jwt).getBody().getSubject();
-	}
 }
