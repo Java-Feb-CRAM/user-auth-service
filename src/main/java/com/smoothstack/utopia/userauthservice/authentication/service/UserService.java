@@ -4,9 +4,6 @@
 package com.smoothstack.utopia.userauthservice.authentication.service;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
-
 import javax.transaction.Transactional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -155,20 +152,5 @@ public class UserService {
 
 	public String authenticateUser(CredentialsDto credentialsDto) {
 		return jwtUtil.getAuthenticatedJwt(credentialsDto.getUsername(), credentialsDto.getPassword());
-	}
-
-	public Map<String, String> getUserFromJwt(String postBody)
-	{
-		User user = userRepository.findByUsername(
-				jwtUtil.getUsernameFromJwt(postBody.split(" ")[1].trim()))
-				.orElseThrow(InvalidTokenException::new);
-		Map<String, String> userMap = new HashMap<>();
-		userMap.put("username", user.getUsername());
-		userMap.put("email", user.getEmail());
-		userMap.put("familyName", user.getFamilyName());
-		userMap.put("givenName", user.getGivenName());
-		userMap.put("phone", user.getPhone());
-		userMap.put("role", user.getUserRole().getName());
-		return userMap;
 	}
 }
