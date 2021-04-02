@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.smoothstack.utopia.userauthservice.authentication.dto.CredentialsDto;
@@ -27,9 +28,16 @@ public class AuthenticationController {
 	private UserService userService;
 
     private final String AUTHENTICATE_USER = "/users/credentials/authenticate";
+    private final String CURRENT_USER = "/users/current";
 
 	@PostMapping(path = AUTHENTICATE_USER, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
 	public Map<String, String> authenticateUser(@Valid @RequestBody CredentialsDto credentialsDto) {
 		return Collections.singletonMap("authenticatedJwt", userService.authenticateUser(credentialsDto));
 	}
+	
+    @PostMapping(path = CURRENT_USER, produces = MediaType.APPLICATION_JSON_VALUE)
+    public Map<String, String> getCurrentUser(@RequestHeader(name = "Authorization") String jwt)
+    {
+        return userService.getUserFromJwt(jwt);
+    }
 }

@@ -10,8 +10,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.time.Duration;
 import java.time.LocalDateTime;
 
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -41,6 +44,7 @@ import com.smoothstack.utopia.userauthservice.dao.UserRoleRepository;
 @TestPropertySource(
   locations = "classpath:application-integrationtest.properties"
 )
+@TestInstance(Lifecycle.PER_CLASS)
 public class PasswordResetControllerTest {
     @Autowired
     MockMvc mvc;
@@ -89,6 +93,14 @@ public class PasswordResetControllerTest {
         user.setUserRole(userRole);
         user.setPassword(passwordEncoder.encode(VALID_USER_PASSWORD));
         userRepository.save(user);
+    }
+    
+    @AfterAll
+    private void clearDatabase()
+    {
+        passwordResetTokenRepository.deleteAll();
+        userRepository.deleteAll();
+        userRoleRepository.deleteAll();     	
     }
     
     @Test
