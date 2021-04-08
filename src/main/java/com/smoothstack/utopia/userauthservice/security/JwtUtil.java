@@ -36,7 +36,7 @@ public class JwtUtil implements Serializable {
 	@Autowired
 	PasswordEncoder passwordEncoder;
 
-	@Value("${UT_JWT_SECRET}")
+	@Value("${jwt.secret}")
 	private String jwtSecret;
 
 	public String generateJwt(String username) {
