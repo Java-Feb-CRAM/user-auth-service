@@ -2,6 +2,7 @@ package com.smoothstack.utopia.userauthservice;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.TestPropertySource;
 
 @SpringBootTest(classes = UserAuthServiceApplication.class)
 @TestPropertySource(
@@ -10,7 +11,5 @@ import org.springframework.boot.test.context.SpringBootTest;
 public class UserAuthenticationApplicationTests {
 
   @Test
-  void contextLoads() {
-  }
-
+  void contextLoads() {}
 }
