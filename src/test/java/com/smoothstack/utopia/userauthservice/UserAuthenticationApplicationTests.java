@@ -11,7 +11,5 @@ import org.springframework.test.context.TestPropertySource;
 public class UserAuthenticationApplicationTests {
 
   @Test
-  void contextLoads() {
-  }
-
+  void contextLoads() {}
 }
