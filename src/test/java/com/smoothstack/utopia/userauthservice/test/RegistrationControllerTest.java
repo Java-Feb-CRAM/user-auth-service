@@ -121,7 +121,7 @@ class RegistrationControllerTest {
   private final String ACTIVATE_USER = "/users/useranames/tokens/activate";
 
   @Test
-  void registerUserAccount_WithValidUserDto_Status201_AssertUserEntryAndPassword()
+  void registerUserAccount_WithValidUserDto_Status201_AssertUserEntry()
     throws Exception {
     String uri = NEW_USER;
 
@@ -153,12 +153,6 @@ class RegistrationControllerTest {
     assertEquals(
       userRepository.findByUsername("HSimpson").get().getGivenName(),
       userDto.getGivenName()
-    );
-    assertTrue(
-      passwordEncoder.matches(
-        userDto.getUsername(),
-        userRepository.findByUsername("HSimpson").get().getPassword()
-      )
     );
   }
 
@@ -213,7 +207,7 @@ class RegistrationControllerTest {
   }
 
   @Test
-  void registerUserAccount_WithExistingUser_Status409_AssertThatUserExists()
+  void registerUserAccount_WithExistingUser_Status409()
     throws Exception {
     String uri = NEW_USER;
 
@@ -236,7 +230,6 @@ class RegistrationControllerTest {
           .contentType(MediaType.APPLICATION_JSON)
       )
       .andExpect(status().isConflict());
-    assertTrue(userRepository.findByUsername("BSimpson").isPresent());
   }
 
   @Test
@@ -291,7 +284,7 @@ class RegistrationControllerTest {
   }
 
   @Test
-  void registerUserAccount_WithExistingUsernameMatchingLowercase_Status409_AssertUserExistsByUsername()
+  void registerUserAccount_WithExistingUsernameMatchingLowercase_Status409()
     throws Exception {
     String uri = NEW_USER;
 
@@ -314,7 +307,6 @@ class RegistrationControllerTest {
           .contentType(MediaType.APPLICATION_JSON)
       )
       .andExpect(status().isConflict());
-    assertFalse(userRepository.findByUsernameIgnoreCase("bsimpson").isEmpty());
   }
 
   @Test
@@ -548,7 +540,6 @@ class RegistrationControllerTest {
       )
       .andExpect(status().isBadRequest());
 
-    assertTrue(verificationTokenRepository.findByToken(token).isEmpty());
     assertFalse(userRepository.findByUsername("BSimpson").get().isActive());
   }
 }

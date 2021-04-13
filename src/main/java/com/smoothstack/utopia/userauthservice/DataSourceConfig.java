@@ -29,7 +29,7 @@ public class DataSourceConfig {
 
   @Bean
   public DataSource getDataSource() {
-    DataSourceBuilder dataSourceBuilder = DataSourceBuilder.create();
+    DataSourceBuilder<?> dataSourceBuilder = DataSourceBuilder.create();
     dataSourceBuilder.url(
       "jdbc:mysql://" + mysqlHost + ":" + mysqlPort + "/utopia"
     );
