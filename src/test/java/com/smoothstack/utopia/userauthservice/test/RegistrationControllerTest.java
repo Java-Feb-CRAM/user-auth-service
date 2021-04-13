@@ -3,8 +3,10 @@
  */
 package com.smoothstack.utopia.userauthservice.test;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -148,12 +150,11 @@ class RegistrationControllerTest {
       .andExpect(
         MockMvcResultMatchers.jsonPath("$.accountVerificationToken").exists()
       );
-    assertThat(
-      userDto
-        .getGivenName()
-        .equals(userRepository.findByUsername("HSimpson").get().getGivenName())
+    assertEquals(
+      userRepository.findByUsername("HSimpson").get().getGivenName(),
+      userDto.getGivenName()
     );
-    assertThat(
+    assertTrue(
       passwordEncoder.matches(
         userDto.getUsername(),
         userRepository.findByUsername("HSimpson").get().getPassword()
@@ -235,7 +236,7 @@ class RegistrationControllerTest {
           .contentType(MediaType.APPLICATION_JSON)
       )
       .andExpect(status().isConflict());
-    assertThat(userRepository.findByUsername("BSimpson").isPresent());
+    assertTrue(userRepository.findByUsername("BSimpson").isPresent());
   }
 
   @Test
@@ -376,13 +377,13 @@ class RegistrationControllerTest {
         )
         .andExpect(MockMvcResultMatchers.jsonPath("$.token").exists())
         .andReturn();
-    assertFalse(
-      token.equals(
-        mapper
-          .readTree(mvcResult.getResponse().getContentAsString())
-          .get("token")
-          .asText()
-      )
+
+    assertNotEquals(
+      token,
+      mapper
+        .readTree(mvcResult.getResponse().getContentAsString())
+        .get("token")
+        .asText()
     );
   }
 
@@ -449,9 +450,9 @@ class RegistrationControllerTest {
       .get("message")
       .asText();
 
-    assertThat(verificationTokenRepository.findByToken(token).isEmpty());
-    assertThat(userRepository.findByUsername("BSimpson").get().isActive());
-    assertThat(message.equals("user-activated"));
+    assertTrue(verificationTokenRepository.findByToken(token).isEmpty());
+    assertTrue(userRepository.findByUsername("BSimpson").get().isActive());
+    assertEquals(message, "user-activated");
   }
 
   @Test
@@ -476,7 +477,7 @@ class RegistrationControllerTest {
       .get("token")
       .asText();
 
-    assertThat(userRepository.findByUsername("LSimpson").get().isActive());
+    assertTrue(userRepository.findByUsername("LSimpson").get().isActive());
 
     uri = ACTIVATE_USER;
     mvcResult =
@@ -499,9 +500,9 @@ class RegistrationControllerTest {
       .get("message")
       .asText();
 
-    assertThat(verificationTokenRepository.findByToken(token).isEmpty());
-    assertThat(userRepository.findByUsername("LSimpson").get().isActive());
-    assertThat(message.equals("user-already-activated"));
+    assertTrue(verificationTokenRepository.findByToken(token).isEmpty());
+    assertTrue(userRepository.findByUsername("LSimpson").get().isActive());
+    assertEquals(message, "user-already-activated");
   }
 
   @Test
@@ -547,7 +548,7 @@ class RegistrationControllerTest {
       )
       .andExpect(status().isBadRequest());
 
-    assertThat(verificationTokenRepository.findByToken(token).isEmpty());
+    assertTrue(verificationTokenRepository.findByToken(token).isEmpty());
     assertFalse(userRepository.findByUsername("BSimpson").get().isActive());
   }
 }

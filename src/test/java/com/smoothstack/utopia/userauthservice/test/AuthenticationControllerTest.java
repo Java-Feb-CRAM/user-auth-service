@@ -3,8 +3,8 @@
  */
 package com.smoothstack.utopia.userauthservice.test;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -120,8 +120,8 @@ class AuthenticationControllerTest {
       )
       .andExpect(MockMvcResultMatchers.jsonPath("$.authenticatedJwt").exists());
 
-    assertThat(userRepository.findByUsername("LSimpson").get().isActive());
-    assertThat(
+    assertTrue(userRepository.findByUsername("LSimpson").get().isActive());
+    assertTrue(
       passwordEncoder.matches(
         "Sax4Life!!!",
         userRepository.findByUsername("LSimpson").get().getPassword()
@@ -149,7 +149,7 @@ class AuthenticationControllerTest {
       .andExpect(status().isBadRequest());
 
     assertFalse(userRepository.findByUsername("BSimpson").get().isActive());
-    assertThat(
+    assertTrue(
       passwordEncoder.matches(
         "Not1CowAllowed!!!",
         userRepository.findByUsername("BSimpson").get().getPassword()
@@ -176,7 +176,7 @@ class AuthenticationControllerTest {
       )
       .andExpect(status().isBadRequest());
 
-    assertThat(userRepository.findByUsername("HSimpson").isEmpty());
+    assertTrue(userRepository.findByUsername("HSimpson").isEmpty());
   }
 
   @Test
@@ -198,7 +198,7 @@ class AuthenticationControllerTest {
       )
       .andExpect(status().isBadRequest());
 
-    assertThat(userRepository.findByUsername("LSimpson").get().isActive());
+    assertTrue(userRepository.findByUsername("LSimpson").get().isActive());
     assertFalse(
       passwordEncoder
         .encode("All10CowsAllowed!!!")
