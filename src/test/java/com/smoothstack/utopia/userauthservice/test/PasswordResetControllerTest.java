@@ -104,7 +104,7 @@ class PasswordResetControllerTest {
   }
 
   @Test
-  void changeUserPassword_WithGeneratedTokenFromExistingUsername_UpdateValidPassword_Status200_AssertChangedPassword()
+  void changeUserPassword_WithGeneratedTokenFromExistingUsername_UpdateValidPassword_Status200()
     throws Exception {
     String uri = GENERATE_TOKEN;
     // Get created token
@@ -144,14 +144,6 @@ class PasswordResetControllerTest {
       .andExpect(
         content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON_VALUE)
       );
-
-    assertTrue(
-      passwordEncoder
-        .encode(NEW_PASSWORD)
-        .matches(
-          userRepository.findByUsername(VALID_USER_USERNAME).get().getPassword()
-        )
-    );
   }
 
   @Test
@@ -218,7 +210,7 @@ class PasswordResetControllerTest {
   }
 
   @Test
-  void changeUserPassword_WithGeneratedTokenFromExistingUsername_InvalidCurrentPassword_NoPasswordUpdatePerformed_Staus409_AssertPasswordUnchanged()
+  void changeUserPassword_WithGeneratedTokenFromExistingUsername_InvalidCurrentPassword_NoPasswordUpdatePerformed_Staus409()
     throws Exception {
     String uri = GENERATE_TOKEN;
     MvcResult mvcResult = mvc
@@ -253,18 +245,10 @@ class PasswordResetControllerTest {
           .contentType(MediaType.APPLICATION_JSON)
       )
       .andExpect(status().isConflict());
-
-    assertTrue(
-      passwordEncoder
-        .encode(VALID_USER_PASSWORD)
-        .matches(
-          userRepository.findByUsername(VALID_USER_USERNAME).get().getPassword()
-        )
-    );
   }
 
   @Test
-  void changeUserPassword_WithGeneratedTokenFromExistingUsername_NewPasswordUnmatching_NoPasswordUpdatePerformed_Staus409_AssertPasswordUnchanged()
+  void changeUserPassword_WithGeneratedTokenFromExistingUsername_NewPasswordUnmatching_NoPasswordUpdatePerformed_Staus409()
     throws Exception {
     String uri = GENERATE_TOKEN;
     MvcResult mvcResult = mvc
@@ -299,18 +283,10 @@ class PasswordResetControllerTest {
           .contentType(MediaType.APPLICATION_JSON)
       )
       .andExpect(status().isConflict());
-
-    assertTrue(
-      passwordEncoder
-        .encode(VALID_USER_PASSWORD)
-        .matches(
-          userRepository.findByUsername(VALID_USER_USERNAME).get().getPassword()
-        )
-    );
   }
 
   @Test
-  void changeUserPassword_WithGeneratedTokenFromExistingUsername_ExpireTheToken_TokenExpired_NoPasswordUpdatePerformed_Staus400_AssertPasswordUnchanged()
+  void changeUserPassword_WithGeneratedTokenFromExistingUsername_ExpireTheToken_TokenExpired_NoPasswordUpdatePerformed_Staus400()
     throws Exception {
     String uri = GENERATE_TOKEN;
     MvcResult mvcResult = mvc
@@ -354,18 +330,10 @@ class PasswordResetControllerTest {
           .contentType(MediaType.APPLICATION_JSON)
       )
       .andExpect(status().isBadRequest());
-
-    assertTrue(
-      passwordEncoder
-        .encode(VALID_USER_PASSWORD)
-        .matches(
-          userRepository.findByUsername(VALID_USER_USERNAME).get().getPassword()
-        )
-    );
   }
 
   @Test
-  void changeUserPassword_WithInvalidInjectedToken_TokenInvalidated_NoPasswordUpdatePerformed_Staus400_AssertPasswordUnchanged()
+  void changeUserPassword_WithInvalidInjectedToken_TokenInvalidated_NoPasswordUpdatePerformed_Staus400()
     throws Exception {
     // Reverse the password but don't change the token
     PasswordResetDto passwordResetDto = new PasswordResetDto();
@@ -389,14 +357,6 @@ class PasswordResetControllerTest {
           .contentType(MediaType.APPLICATION_JSON)
       )
       .andExpect(status().isBadRequest());
-
-    assertTrue(
-      passwordEncoder
-        .encode(VALID_USER_PASSWORD)
-        .matches(
-          userRepository.findByUsername(VALID_USER_USERNAME).get().getPassword()
-        )
-    );
   }
 
   @Test
@@ -519,7 +479,7 @@ class PasswordResetControllerTest {
 
     // Confirm token
     uri = CONFIRM_TOKEN;
-    mvc
+    mvcResult = mvc
       .perform(
         MockMvcRequestBuilders
           .post(uri)
@@ -531,8 +491,11 @@ class PasswordResetControllerTest {
       .andExpect(
         content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON)
       )
-      .andExpect(MockMvcResultMatchers.jsonPath("$.token").exists());
-    assertEquals(MockMvcResultMatchers.jsonPath("$.token").toString(), token);
+      .andExpect(MockMvcResultMatchers.jsonPath("$.token").exists()).andReturn();
+    assertEquals(mapper
+        .readTree(mvcResult.getResponse().getContentAsString())
+        .get("token")
+        .asText(), token);
   }
 
   @Test

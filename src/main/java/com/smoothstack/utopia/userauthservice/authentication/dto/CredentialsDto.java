@@ -20,7 +20,7 @@ public class CredentialsDto {
 
     @NotNull(message = "Username is required.")
     @Size(min = 8, max = 32, message = "Username must be between 8 and 32 characters.")
-    @Pattern(regexp = "^[a-zA-Z]+[a-zA-Z\\d_]+$")
+    @Pattern(regexp = "^[a-zA-Z]{1}[a-zA-Z\\d_]{7,31}$")
     private String username;
 
     @NotNull(message = "Password is required.")
