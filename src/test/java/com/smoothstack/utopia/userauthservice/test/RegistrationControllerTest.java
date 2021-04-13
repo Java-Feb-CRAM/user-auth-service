@@ -156,7 +156,7 @@ class RegistrationControllerTest {
     );
     assertTrue(
       passwordEncoder.matches(
-        userDto.getUsername(),
+        userDto.getPassword(),
         userRepository.findByUsername("HSimpson").get().getPassword()
       )
     );
@@ -527,7 +527,6 @@ class RegistrationControllerTest {
       .readTree(mvcResult.getResponse().getContentAsString())
       .get("token")
       .asText();
-
     // Expire the token by one day
     VerificationToken verificationToken = verificationTokenRepository
       .findByToken(token)
@@ -547,7 +546,6 @@ class RegistrationControllerTest {
           .contentType(MediaType.APPLICATION_JSON)
       )
       .andExpect(status().isBadRequest());
-
     assertTrue(verificationTokenRepository.findByToken(token).isEmpty());
     assertFalse(userRepository.findByUsername("BSimpson").get().isActive());
   }

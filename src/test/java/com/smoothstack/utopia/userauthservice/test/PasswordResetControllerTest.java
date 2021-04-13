@@ -3,6 +3,7 @@
  */
 package com.smoothstack.utopia.userauthservice.test;
 
+import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -145,12 +146,15 @@ class PasswordResetControllerTest {
         content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON_VALUE)
       );
 
+    System.out.println(passwordEncoder.encode(NEW_PASSWORD));
+    System.out.println(
+      userRepository.findByUsername(VALID_USER_USERNAME).get().getPassword()
+    );
     assertTrue(
-      passwordEncoder
-        .encode(NEW_PASSWORD)
-        .matches(
-          userRepository.findByUsername(VALID_USER_USERNAME).get().getPassword()
-        )
+      passwordEncoder.matches(
+        NEW_PASSWORD,
+        userRepository.findByUsername(VALID_USER_USERNAME).get().getPassword()
+      )
     );
   }
 
@@ -255,11 +259,10 @@ class PasswordResetControllerTest {
       .andExpect(status().isConflict());
 
     assertTrue(
-      passwordEncoder
-        .encode(VALID_USER_PASSWORD)
-        .matches(
-          userRepository.findByUsername(VALID_USER_USERNAME).get().getPassword()
-        )
+      passwordEncoder.matches(
+        VALID_USER_PASSWORD,
+        userRepository.findByUsername(VALID_USER_USERNAME).get().getPassword()
+      )
     );
   }
 
@@ -301,11 +304,10 @@ class PasswordResetControllerTest {
       .andExpect(status().isConflict());
 
     assertTrue(
-      passwordEncoder
-        .encode(VALID_USER_PASSWORD)
-        .matches(
-          userRepository.findByUsername(VALID_USER_USERNAME).get().getPassword()
-        )
+      passwordEncoder.matches(
+        VALID_USER_PASSWORD,
+        userRepository.findByUsername(VALID_USER_USERNAME).get().getPassword()
+      )
     );
   }
 
@@ -356,11 +358,10 @@ class PasswordResetControllerTest {
       .andExpect(status().isBadRequest());
 
     assertTrue(
-      passwordEncoder
-        .encode(VALID_USER_PASSWORD)
-        .matches(
-          userRepository.findByUsername(VALID_USER_USERNAME).get().getPassword()
-        )
+      passwordEncoder.matches(
+        VALID_USER_PASSWORD,
+        userRepository.findByUsername(VALID_USER_USERNAME).get().getPassword()
+      )
     );
   }
 
@@ -391,11 +392,10 @@ class PasswordResetControllerTest {
       .andExpect(status().isBadRequest());
 
     assertTrue(
-      passwordEncoder
-        .encode(VALID_USER_PASSWORD)
-        .matches(
-          userRepository.findByUsername(VALID_USER_USERNAME).get().getPassword()
-        )
+      passwordEncoder.matches(
+        VALID_USER_PASSWORD,
+        userRepository.findByUsername(VALID_USER_USERNAME).get().getPassword()
+      )
     );
   }
 
@@ -531,8 +531,8 @@ class PasswordResetControllerTest {
       .andExpect(
         content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON)
       )
-      .andExpect(MockMvcResultMatchers.jsonPath("$.token").exists());
-    assertEquals(MockMvcResultMatchers.jsonPath("$.token").toString(), token);
+      .andExpect(MockMvcResultMatchers.jsonPath("$.token").exists())
+      .andExpect(MockMvcResultMatchers.jsonPath("$.token", is(token)));
   }
 
   @Test
