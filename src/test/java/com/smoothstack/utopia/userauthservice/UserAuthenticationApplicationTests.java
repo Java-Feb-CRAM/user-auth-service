@@ -8,7 +8,7 @@ import org.springframework.test.context.TestPropertySource;
 @TestPropertySource(
   locations = "classpath:application-integrationtest.properties"
 )
-public class UserAuthenticationApplicationTests {
+class UserAuthenticationApplicationTests {
 
   @Test
   void contextLoads() {}

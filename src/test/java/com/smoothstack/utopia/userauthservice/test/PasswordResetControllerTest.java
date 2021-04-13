@@ -3,7 +3,8 @@
  */
 package com.smoothstack.utopia.userauthservice.test;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -144,7 +145,7 @@ class PasswordResetControllerTest {
         content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON_VALUE)
       );
 
-    assertThat(
+    assertTrue(
       passwordEncoder
         .encode(NEW_PASSWORD)
         .matches(
@@ -253,7 +254,7 @@ class PasswordResetControllerTest {
       )
       .andExpect(status().isConflict());
 
-    assertThat(
+    assertTrue(
       passwordEncoder
         .encode(VALID_USER_PASSWORD)
         .matches(
@@ -299,7 +300,7 @@ class PasswordResetControllerTest {
       )
       .andExpect(status().isConflict());
 
-    assertThat(
+    assertTrue(
       passwordEncoder
         .encode(VALID_USER_PASSWORD)
         .matches(
@@ -354,7 +355,7 @@ class PasswordResetControllerTest {
       )
       .andExpect(status().isBadRequest());
 
-    assertThat(
+    assertTrue(
       passwordEncoder
         .encode(VALID_USER_PASSWORD)
         .matches(
@@ -389,7 +390,7 @@ class PasswordResetControllerTest {
       )
       .andExpect(status().isBadRequest());
 
-    assertThat(
+    assertTrue(
       passwordEncoder
         .encode(VALID_USER_PASSWORD)
         .matches(
@@ -431,7 +432,7 @@ class PasswordResetControllerTest {
       )
       .andExpect(status().isBadRequest());
 
-    assertThat(userRepository.findByUsername(INVALID_USER_USERNAME).isEmpty());
+    assertTrue(userRepository.findByUsername(INVALID_USER_USERNAME).isEmpty());
   }
 
   @Test
@@ -468,10 +469,10 @@ class PasswordResetControllerTest {
       )
       .andExpect(MockMvcResultMatchers.jsonPath("$.token").exists());
 
-    assertThat(
+    assertEquals(
       passwordResetTokenRepository
         .findAllByUser(userRepository.findByUsername(VALID_USER_USERNAME).get())
-        .size() ==
+        .size(),
       1
     );
   }
@@ -531,9 +532,7 @@ class PasswordResetControllerTest {
         content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON)
       )
       .andExpect(MockMvcResultMatchers.jsonPath("$.token").exists());
-    assertThat(
-      token.equals(MockMvcResultMatchers.jsonPath("$.token").toString())
-    );
+    assertEquals(MockMvcResultMatchers.jsonPath("$.token").toString(), token);
   }
 
   @Test
@@ -581,10 +580,10 @@ class PasswordResetControllerTest {
       )
       .andExpect(status().isBadRequest());
 
-    assertThat(
+    assertEquals(
       passwordResetTokenRepository
         .findAllByUser(userRepository.findByUsername(VALID_USER_USERNAME).get())
-        .size() ==
+        .size(),
       0
     );
   }
