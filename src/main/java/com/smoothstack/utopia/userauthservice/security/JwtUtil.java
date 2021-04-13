@@ -20,13 +20,10 @@ import org.springframework.stereotype.Component;
  * @author Rob Maes Mar 19 2021
  */
 @Component
-public class JwtUtil implements Serializable {
+public class JwtUtil {
 
-  private final String jwtIssuer = "utopia.smoothstack.com";
-  private final int ONE_WEEK_MILLISECONDS = 7 * 24 * 60 * 60 * 1000;
-
-  @Serial
-  private static final long serialVersionUID = -569378531925824570L;
+  private static final String JWT_ISSUER = "utopia.smoothstack.com";
+  private static final int ONE_WEEK_MILLISECONDS = 7 * 24 * 60 * 60 * 1000;
 
   @Autowired
   UserRepository userRepository;
@@ -42,7 +39,7 @@ public class JwtUtil implements Serializable {
       .builder()
       .setSubject(format("%s", username))
       .setIssuedAt(new Date())
-      .setIssuer(jwtIssuer)
+      .setIssuer(JWT_ISSUER)
       .setExpiration(
         new Date(System.currentTimeMillis() + ONE_WEEK_MILLISECONDS)
       )
