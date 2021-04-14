@@ -68,6 +68,22 @@ class RegistrationControllerTest {
   private User user;
   private UserRole userRole;
 
+  private UserDto generateUserDto(
+    String username,
+    String email,
+    String matchingPass
+  ) {
+    UserDto userDto = new UserDto();
+    userDto.setUsername(username);
+    userDto.setPhone("18887776666");
+    userDto.setEmail(email);
+    userDto.setFamilyName("Simpson");
+    userDto.setGivenName("Homer");
+    userDto.setPassword("Smrt123!");
+    userDto.setMatchingPassword(matchingPass);
+    return userDto;
+  }
+
   @BeforeEach
   private void setupDatabase() {
     mapper = new ObjectMapper();
@@ -160,14 +176,11 @@ class RegistrationControllerTest {
   void registerUserAccount_WithInvalidMediaType_Status400() throws Exception {
     String uri = NEW_USER;
 
-    UserDto userDto = new UserDto();
-    userDto.setUsername("HSimpson");
-    userDto.setPhone("18887776666");
-    userDto.setEmail("sub@sandwitch.ahhhggmmmnnn.nom");
-    userDto.setFamilyName("Simpson");
-    userDto.setGivenName("Homer");
-    userDto.setPassword("Smrt123!");
-    userDto.setMatchingPassword("Smrt123!");
+    UserDto userDto = generateUserDto(
+      "HSimpson",
+      "sub@sandwitch.ahhhggmmmnnn.nom",
+      "Smrt123!"
+    );
 
     mvc
       .perform(
@@ -207,20 +220,15 @@ class RegistrationControllerTest {
   }
 
   @Test
-  void registerUserAccount_WithExistingUser_Status409()
-    throws Exception {
+  void registerUserAccount_WithExistingUser_Status409() throws Exception {
     String uri = NEW_USER;
 
-    UserDto userDto = new UserDto();
-    userDto.setUsername("BSimpson"); // username already taken
-    userDto.setPhone("18887776666");
-    userDto.setEmail("sub@sandwitch.ahhhggmmmnnn.nom");
-    userDto.setFamilyName("Simpson");
-    userDto.setGivenName("Homer");
-    userDto.setPassword("Smrt123!");
-    userDto.setMatchingPassword("Smrt123!");
+    UserDto userDto = generateUserDto(
+      "BSimpson",
+      "sub@sandwitch.ahhhggmmmnnn.nom",
+      "Smrt123!"
+    );
     String inputJson = mapper.writeValueAsString(userDto);
-
     mvc
       .perform(
         MockMvcRequestBuilders
@@ -262,14 +270,8 @@ class RegistrationControllerTest {
   void registerUserAccount_WithExistingEmail_Status409() throws Exception {
     String uri = NEW_USER;
 
-    UserDto userDto = new UserDto();
-    userDto.setUsername("HSimpson");
-    userDto.setPhone("18887776666");
-    userDto.setEmail("test@ss.com"); // BSimpson's email
-    userDto.setFamilyName("Simpson");
-    userDto.setGivenName("Homer");
-    userDto.setPassword("Smrt123!");
-    userDto.setMatchingPassword("Smrt123!");
+    UserDto userDto = generateUserDto("HSimpson", "test@ss.com", "Smrt123!");
+
     String inputJson = mapper.writeValueAsString(userDto);
 
     mvc
@@ -288,14 +290,11 @@ class RegistrationControllerTest {
     throws Exception {
     String uri = NEW_USER;
 
-    UserDto userDto = new UserDto();
-    userDto.setUsername("bsimpson"); // BSimpson exists, so bsimpson should be protected too
-    userDto.setPhone("18887776666");
-    userDto.setEmail("sub@sandwitch.ahhhggmmmnnn.nom");
-    userDto.setFamilyName("Simpson");
-    userDto.setGivenName("Homer");
-    userDto.setPassword("Smrt123!");
-    userDto.setMatchingPassword("Smrt123!");
+    UserDto userDto = generateUserDto(
+      "bsimpson",
+      "sub@sandwitch.ahhhggmmmnnn.nom",
+      "Smrt123!"
+    );
     String inputJson = mapper.writeValueAsString(userDto);
 
     mvc
@@ -444,7 +443,7 @@ class RegistrationControllerTest {
 
     assertTrue(verificationTokenRepository.findByToken(token).isEmpty());
     assertTrue(userRepository.findByUsername("BSimpson").get().isActive());
-    assertEquals(message, "user-activated");
+    assertEquals("user-activated", message);
   }
 
   @Test
@@ -494,7 +493,7 @@ class RegistrationControllerTest {
 
     assertTrue(verificationTokenRepository.findByToken(token).isEmpty());
     assertTrue(userRepository.findByUsername("LSimpson").get().isActive());
-    assertEquals(message, "user-already-activated");
+    assertEquals("user-already-activated", message);
   }
 
   @Test
