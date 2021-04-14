@@ -430,10 +430,10 @@ class PasswordResetControllerTest {
       .andExpect(MockMvcResultMatchers.jsonPath("$.token").exists());
 
     assertEquals(
+      1,
       passwordResetTokenRepository
         .findAllByUser(userRepository.findByUsername(VALID_USER_USERNAME).get())
-        .size(),
-      1
+        .size()
     );
   }
 
@@ -479,23 +479,28 @@ class PasswordResetControllerTest {
 
     // Confirm token
     uri = CONFIRM_TOKEN;
-    mvcResult = mvc
-      .perform(
-        MockMvcRequestBuilders
-          .post(uri)
-          .accept(MediaType.APPLICATION_JSON)
-          .content("{\"token\":\"" + token + "\"}")
-          .contentType(MediaType.APPLICATION_JSON)
-      )
-      .andExpect(status().isOk())
-      .andExpect(
-        content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON)
-      )
-      .andExpect(MockMvcResultMatchers.jsonPath("$.token").exists()).andReturn();
-    assertEquals(mapper
+    mvcResult =
+      mvc
+        .perform(
+          MockMvcRequestBuilders
+            .post(uri)
+            .accept(MediaType.APPLICATION_JSON)
+            .content("{\"token\":\"" + token + "\"}")
+            .contentType(MediaType.APPLICATION_JSON)
+        )
+        .andExpect(status().isOk())
+        .andExpect(
+          content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON)
+        )
+        .andExpect(MockMvcResultMatchers.jsonPath("$.token").exists())
+        .andReturn();
+    assertEquals(
+      mapper
         .readTree(mvcResult.getResponse().getContentAsString())
         .get("token")
-        .asText(), token);
+        .asText(),
+      token
+    );
   }
 
   @Test
@@ -544,10 +549,10 @@ class PasswordResetControllerTest {
       .andExpect(status().isBadRequest());
 
     assertEquals(
+      0,
       passwordResetTokenRepository
         .findAllByUser(userRepository.findByUsername(VALID_USER_USERNAME).get())
-        .size(),
-      0
+        .size()
     );
   }
 }
