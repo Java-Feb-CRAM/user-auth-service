@@ -176,6 +176,31 @@ class RegistrationControllerTest {
   void registerUserAccount_WithInvalidMediaType_Status400() throws Exception {
     String uri = NEW_USER;
 
+    UserDto userDto = new UserDto();
+    userDto.setUsername("HSimpson");
+    userDto.setPhone("9999999999"); // Lisa's phone number
+    userDto.setEmail("sub@sandwitch.ahhhggmmmnnn.nom");
+    userDto.setFamilyName("Simpson");
+    userDto.setGivenName("Homer");
+    userDto.setPassword("Smrt123!");
+    userDto.setMatchingPassword("Smrt123!");
+    String inputJson = mapper.writeValueAsString(userDto);
+    
+    mvc
+      .perform(
+        MockMvcRequestBuilders
+          .post(uri)
+          .accept(MediaType.APPLICATION_JSON)
+          .content(inputJson)
+          .contentType(MediaType.APPLICATION_JSON)
+      )
+      .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  void registerUserAccount_WithAlreadyExistingPhoneNumber_Status400() throws Exception {
+    String uri = NEW_USER;
+
     UserDto userDto = generateUserDto(
       "HSimpson",
       "sub@sandwitch.ahhhggmmmnnn.nom",
@@ -192,7 +217,7 @@ class RegistrationControllerTest {
       )
       .andExpect(status().isBadRequest());
   }
-
+  
   @Test
   void registerUserAccount_WithUnmatchingPasswords_Status409()
     throws Exception {
