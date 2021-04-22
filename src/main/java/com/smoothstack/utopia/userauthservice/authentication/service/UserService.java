@@ -14,8 +14,9 @@ import com.smoothstack.utopia.userauthservice.authentication.error.InvalidCreden
 import com.smoothstack.utopia.userauthservice.authentication.error.InvalidCurrentPasswordException;
 import com.smoothstack.utopia.userauthservice.authentication.error.InvalidTokenException;
 import com.smoothstack.utopia.userauthservice.authentication.error.PasswordResetTokenExpiredException;
+import com.smoothstack.utopia.userauthservice.authentication.error.PhoneNumberAlreadyExistsException;
 import com.smoothstack.utopia.userauthservice.authentication.error.UnmatchedPasswordException;
-import com.smoothstack.utopia.userauthservice.authentication.error.UserAlreadyExistException;
+import com.smoothstack.utopia.userauthservice.authentication.error.UserAlreadyExistsException;
 import com.smoothstack.utopia.userauthservice.authentication.error.VerificationTokenExpiredException;
 import com.smoothstack.utopia.userauthservice.dao.PasswordResetTokenRepository;
 import com.smoothstack.utopia.userauthservice.dao.UserRepository;
@@ -97,14 +98,17 @@ public class UserService {
   }
 
   public User registerNewUserAccount(UserDto userDto)
-    throws UserAlreadyExistException, UnmatchedPasswordException {
+    throws UserAlreadyExistsException, UnmatchedPasswordException {
     if (!userRepository.findByEmail(userDto.getEmail()).isEmpty()) {
-      throw new UserAlreadyExistException();
+      throw new UserAlreadyExistsException();
     }
     if (
       !userRepository.findByUsernameIgnoreCase(userDto.getUsername()).isEmpty()
     ) {
-      throw new UserAlreadyExistException();
+      throw new UserAlreadyExistsException();
+    }
+    if (!userRepository.findByPhone(userDto.getPhone()).isEmpty()) {
+      throw new PhoneNumberAlreadyExistsException();
     }
     if (userDto.getPassword().equals(userDto.getMatchingPassword())) {
       User user = new User();
