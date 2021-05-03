@@ -50,7 +50,7 @@
     <dependency>
       <groupId>com.smoothstack.utopia</groupId>
       <artifactId>shared</artifactId>
-      <version>[1.11-SNAPSHOT,)</version>
+      <version>[3.2-SNAPSHOT,)</version>
     </dependency>
     <dependency>
       <groupId>org.projectlombok</groupId>
