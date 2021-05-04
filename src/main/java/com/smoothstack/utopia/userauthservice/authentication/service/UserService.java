@@ -17,6 +17,7 @@ import com.smoothstack.utopia.userauthservice.authentication.error.PasswordReset
 import com.smoothstack.utopia.userauthservice.authentication.error.PhoneNumberAlreadyExistsException;
 import com.smoothstack.utopia.userauthservice.authentication.error.UnmatchedPasswordException;
 import com.smoothstack.utopia.userauthservice.authentication.error.UserAlreadyExistsException;
+import com.smoothstack.utopia.userauthservice.authentication.error.UsernameDoesNotExist;
 import com.smoothstack.utopia.userauthservice.authentication.error.VerificationTokenExpiredException;
 import com.smoothstack.utopia.userauthservice.dao.PasswordResetTokenRepository;
 import com.smoothstack.utopia.userauthservice.dao.UserRepository;
@@ -56,6 +57,10 @@ public class UserService {
   @Autowired
   private JwtUtil jwtUtil;
 
+  public User getUserByUsername(String username) {
+    return userRepository.findByUsername(username).orElseThrow(UsernameDoesNotExist::new);
+  }
+  
   public boolean validatePasswordResetToken(String token)
     throws InvalidTokenException {
     PasswordResetToken resetToken = passwordResetTokenRepository
@@ -133,12 +138,8 @@ public class UserService {
       .orElseThrow(InvalidCredentialsException::new);
 
     verificationTokenRepository
-      .findByUser(user)
-      .ifPresentOrElse(
-        t -> verificationTokenRepository.delete(t),
-        () ->
-          verificationTokenRepository.save(new VerificationToken(token, user))
-      );
+      .findByUser(user).ifPresent(t -> verificationTokenRepository.delete(t));
+    verificationTokenRepository.save(new VerificationToken(token, user));
   }
 
   public void createPasswordResetTokenForUser(String token, String username)
