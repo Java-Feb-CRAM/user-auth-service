@@ -14,6 +14,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.smoothstack.utopia.shared.model.User;
 import com.smoothstack.utopia.shared.model.UserRole;
 import com.smoothstack.utopia.shared.model.VerificationToken;
+import com.smoothstack.utopia.shared.service.EmailService;
 import com.smoothstack.utopia.userauthservice.authentication.dto.UserDto;
 import com.smoothstack.utopia.userauthservice.authentication.error.UsernameDoesNotExist;
 import com.smoothstack.utopia.userauthservice.dao.UserRepository;
@@ -26,9 +27,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.TestPropertySource;
@@ -64,6 +67,9 @@ class RegistrationControllerTest {
   @Autowired
   private PasswordEncoder passwordEncoder;
 
+  @MockBean
+  private EmailService emailService;
+  
   private ObjectMapper mapper;
 
   private User user;
@@ -87,6 +93,12 @@ class RegistrationControllerTest {
 
   @BeforeEach
   private void setupDatabase() {
+
+    Mockito
+      .doNothing()
+      .when(emailService)
+      .send(Mockito.anyString(), Mockito.any(), Mockito.any());
+    
     mapper = new ObjectMapper();
 
     verificationTokenRepository.deleteAll();
