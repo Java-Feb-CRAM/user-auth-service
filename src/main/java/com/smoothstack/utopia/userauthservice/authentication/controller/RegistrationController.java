@@ -1,5 +1,8 @@
 package com.smoothstack.utopia.userauthservice.authentication.controller;
 
+import com.smoothstack.utopia.shared.mailmodels.RegistrationMailModel;
+import com.smoothstack.utopia.shared.model.User;
+import com.smoothstack.utopia.shared.service.EmailService;
 import com.smoothstack.utopia.userauthservice.authentication.dto.UserDto;
 import com.smoothstack.utopia.userauthservice.authentication.dto.UserWithAccountVerificationTokenDto;
 import com.smoothstack.utopia.userauthservice.authentication.service.UserService;
@@ -30,13 +33,16 @@ public class RegistrationController {
 
   @Autowired
   private UserService userService;
+  
+  @Autowired
+  private EmailService emailService;
 
   private static final String MAPPING_VALUE = "/users";
   private static final String NEW_USER = MAPPING_VALUE + "/new";
   private static final String GENERATE_TOKEN =
     MAPPING_VALUE + "/usernames/tokens/generate";
   private static final String ACTIVATE_USER =
-    MAPPING_VALUE + "/useranames/tokens/activate";
+    MAPPING_VALUE + "/usernames/tokens/activate";
 
   // New user registration
   @PostMapping(value = NEW_USER) // posting sensitive user details
@@ -51,6 +57,11 @@ public class RegistrationController {
     userService.createVerificationTokenForUser(token, userDto.getUsername()); // Creates activation token
     userWithToken.setAccountVerificationToken(token); // Add token to DTO
     // Return full DTO which is serialized to JSON as a response
+    RegistrationMailModel registrationMailModel = new RegistrationMailModel();
+    registrationMailModel.setGivenName(userDto.getGivenName());
+    registrationMailModel.setFamilyName(userDto.getFamilyName());
+    registrationMailModel.setEmailValidationToken(token);
+    emailService.send(userDto.getEmail(), EmailService.MailTemplate.REGISTRATION, registrationMailModel);
     return userWithToken;
   }
 
@@ -66,7 +77,13 @@ public class RegistrationController {
       token,
       usernameMap.get("username")
     );
-    return Collections.singletonMap("token", token); // Return token as a singleton map to be serialized to json
+    User user = userService.getUserByUsername(usernameMap.get("username"));
+    RegistrationMailModel registrationMailModel = new RegistrationMailModel();
+    registrationMailModel.setGivenName(user.getGivenName());
+    registrationMailModel.setFamilyName(user.getFamilyName());
+    registrationMailModel.setEmailValidationToken(token);
+    emailService.send(user.getEmail(), EmailService.MailTemplate.REGISTRATION, registrationMailModel);
+    return Collections.singletonMap("message", "email-sent"); // Return message as a singleton map to be serialized to json
   }
 
   // User activation with token confirmation
@@ -74,9 +91,9 @@ public class RegistrationController {
   public Map<String, String> verifyUserAccount(
     @RequestBody Map<String, String> tokenMap
   ) {
+    System.out.println("test");
     // Validate and return message for status 200
-    if (
-      userService.validateUserAccountVerificationToken(tokenMap.get("token"))
+    if (userService.validateUserAccountVerificationToken(tokenMap.get("token"))
     ) {
       return Collections.singletonMap("message", "user-activated");
     }

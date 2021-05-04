@@ -15,6 +15,7 @@ import com.smoothstack.utopia.shared.model.User;
 import com.smoothstack.utopia.shared.model.UserRole;
 import com.smoothstack.utopia.shared.model.VerificationToken;
 import com.smoothstack.utopia.userauthservice.authentication.dto.UserDto;
+import com.smoothstack.utopia.userauthservice.authentication.error.UsernameDoesNotExist;
 import com.smoothstack.utopia.userauthservice.dao.UserRepository;
 import com.smoothstack.utopia.userauthservice.dao.UserRoleRepository;
 import com.smoothstack.utopia.userauthservice.dao.VerificationTokenRepository;
@@ -134,7 +135,7 @@ class RegistrationControllerTest {
 
   private final String NEW_USER = "/users/new";
   private final String GENERATE_TOKEN = "/users/usernames/tokens/generate";
-  private final String ACTIVATE_USER = "/users/useranames/tokens/activate";
+  private final String ACTIVATE_USER = "/users/usernames/tokens/activate";
 
   @Test
   void registerUserAccount_WithValidUserDto_Status201_AssertUserEntry()
@@ -176,6 +177,31 @@ class RegistrationControllerTest {
   void registerUserAccount_WithInvalidMediaType_Status400() throws Exception {
     String uri = NEW_USER;
 
+    UserDto userDto = new UserDto();
+    userDto.setUsername("HSimpson");
+    userDto.setPhone("9999999999"); // Lisa's phone number
+    userDto.setEmail("sub@sandwitch.ahhhggmmmnnn.nom");
+    userDto.setFamilyName("Simpson");
+    userDto.setGivenName("Homer");
+    userDto.setPassword("Smrt123!");
+    userDto.setMatchingPassword("Smrt123!");
+    String inputJson = mapper.writeValueAsString(userDto);
+    
+    mvc
+      .perform(
+        MockMvcRequestBuilders
+          .post(uri)
+          .accept(MediaType.APPLICATION_JSON)
+          .content(inputJson)
+          .contentType(MediaType.APPLICATION_JSON)
+      )
+      .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  void registerUserAccount_WithAlreadyExistingPhoneNumber_Status400() throws Exception {
+    String uri = NEW_USER;
+
     UserDto userDto = generateUserDto(
       "HSimpson",
       "sub@sandwitch.ahhhggmmmnnn.nom",
@@ -192,7 +218,7 @@ class RegistrationControllerTest {
       )
       .andExpect(status().isBadRequest());
   }
-
+  
   @Test
   void registerUserAccount_WithUnmatchingPasswords_Status409()
     throws Exception {
@@ -324,7 +350,7 @@ class RegistrationControllerTest {
       .andExpect(
         content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON)
       )
-      .andExpect(MockMvcResultMatchers.jsonPath("$.token").exists());
+      .andExpect(MockMvcResultMatchers.jsonPath("$.message").exists());
   }
 
   @Test
@@ -332,7 +358,7 @@ class RegistrationControllerTest {
     throws Exception {
     String uri = GENERATE_TOKEN;
 
-    MvcResult mvcResult = mvc
+    mvc
       .perform(
         MockMvcRequestBuilders
           .post(uri)
@@ -344,37 +370,33 @@ class RegistrationControllerTest {
       .andExpect(
         content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON)
       )
-      .andExpect(MockMvcResultMatchers.jsonPath("$.token").exists())
-      .andReturn();
-    String token = mapper
-      .readTree(mvcResult.getResponse().getContentAsString())
-      .get("token")
-      .asText();
+      .andExpect(MockMvcResultMatchers.jsonPath("$.message").exists());
 
-    uri = GENERATE_TOKEN;
+    VerificationToken firstVerificationToken = verificationTokenRepository
+        .findByUser(userRepository.findByUsername("BSimpson").orElseThrow(UsernameDoesNotExist::new))
+        .get();
 
-    mvcResult =
-      mvc
-        .perform(
-          MockMvcRequestBuilders
-            .post(uri)
-            .accept(MediaType.APPLICATION_JSON)
-            .content("{\"username\":\"BSimpson\"}")
-            .contentType(MediaType.APPLICATION_JSON)
-        )
-        .andExpect(status().isCreated())
-        .andExpect(
-          content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON)
-        )
-        .andExpect(MockMvcResultMatchers.jsonPath("$.token").exists())
-        .andReturn();
+    mvc
+      .perform(
+        MockMvcRequestBuilders
+          .post(uri)
+          .accept(MediaType.APPLICATION_JSON)
+          .content("{\"username\":\"BSimpson\"}")
+          .contentType(MediaType.APPLICATION_JSON)
+      )
+      .andExpect(status().isCreated())
+      .andExpect(
+        content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON)
+      )
+      .andExpect(MockMvcResultMatchers.jsonPath("$.message").exists());
 
+    VerificationToken verificationToken = verificationTokenRepository
+        .findByUser(userRepository.findByUsername("BSimpson").orElseThrow(UsernameDoesNotExist::new))
+        .get();
+    
     assertNotEquals(
-      token,
-      mapper
-        .readTree(mvcResult.getResponse().getContentAsString())
-        .get("token")
-        .asText()
+      firstVerificationToken.getToken(),
+      verificationToken.getToken()
     );
   }
 
@@ -397,7 +419,7 @@ class RegistrationControllerTest {
   void verifyUserAccount_WithValidToken_AssertNotActiveAccount_VerifyUser_Status200_AssertTokenWasRemovedAndThatUserIsActive()
     throws Exception {
     String uri = GENERATE_TOKEN;
-    MvcResult mvcResult = mvc
+    mvc
       .perform(
         MockMvcRequestBuilders
           .post(uri)
@@ -409,25 +431,24 @@ class RegistrationControllerTest {
       .andExpect(
         content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON)
       )
-      .andExpect(MockMvcResultMatchers.jsonPath("$.token").exists())
-      .andReturn();
-    String token = mapper
-      .readTree(mvcResult.getResponse().getContentAsString())
-      .get("token")
-      .asText();
-
+      .andExpect(MockMvcResultMatchers.jsonPath("$.message").exists());
+    
+    VerificationToken verificationToken = verificationTokenRepository
+        .findByUser(userRepository.findByUsername("BSimpson").orElseThrow(UsernameDoesNotExist::new))
+        .get();
+    
     assertFalse(
-      verificationTokenRepository.findByToken(token).get().getUser().isActive()
+      verificationTokenRepository.findByToken(verificationToken.getToken()).get().getUser().isActive()
     );
 
     uri = ACTIVATE_USER;
-    mvcResult =
+    MvcResult mvcResult =
       mvc
         .perform(
           MockMvcRequestBuilders
             .post(uri)
             .accept(MediaType.APPLICATION_JSON)
-            .content("{\"token\":\"" + token + "\"}")
+            .content("{\"token\":\"" + verificationToken.getToken() + "\"}")
             .contentType(MediaType.APPLICATION_JSON)
         )
         .andExpect(status().isOk())
@@ -441,7 +462,7 @@ class RegistrationControllerTest {
       .get("message")
       .asText();
 
-    assertTrue(verificationTokenRepository.findByToken(token).isEmpty());
+    assertTrue(verificationTokenRepository.findByToken(verificationToken.getToken()).isEmpty());
     assertTrue(userRepository.findByUsername("BSimpson").get().isActive());
     assertEquals("user-activated", message);
   }
@@ -449,7 +470,7 @@ class RegistrationControllerTest {
   @Test
   void verifyUserAccount_WithAlreadyActiveUser_Status200() throws Exception {
     String uri = GENERATE_TOKEN;
-    MvcResult mvcResult = mvc
+    mvc
       .perform(
         MockMvcRequestBuilders
           .post(uri)
@@ -461,23 +482,21 @@ class RegistrationControllerTest {
       .andExpect(
         content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON)
       )
-      .andExpect(MockMvcResultMatchers.jsonPath("$.token").exists())
-      .andReturn();
-    String token = mapper
-      .readTree(mvcResult.getResponse().getContentAsString())
-      .get("token")
-      .asText();
+      .andExpect(MockMvcResultMatchers.jsonPath("$.message").exists());
 
     assertTrue(userRepository.findByUsername("LSimpson").get().isActive());
-
+    
+    VerificationToken verificationToken = verificationTokenRepository
+        .findByUser(userRepository.findByUsername("LSimpson").orElseThrow(UsernameDoesNotExist::new)).get();
+    
     uri = ACTIVATE_USER;
-    mvcResult =
+    MvcResult mvcResult =
       mvc
         .perform(
           MockMvcRequestBuilders
             .post(uri)
             .accept(MediaType.APPLICATION_JSON)
-            .content("{\"token\":\"" + token + "\"}")
+            .content("{\"token\":\"" + verificationToken.getToken() + "\"}")
             .contentType(MediaType.APPLICATION_JSON)
         )
         .andExpect(status().isOk())
@@ -491,7 +510,7 @@ class RegistrationControllerTest {
       .get("message")
       .asText();
 
-    assertTrue(verificationTokenRepository.findByToken(token).isEmpty());
+    assertTrue(verificationTokenRepository.findByToken(verificationToken.getToken()).isEmpty());
     assertTrue(userRepository.findByUsername("LSimpson").get().isActive());
     assertEquals("user-already-activated", message);
   }
@@ -500,7 +519,7 @@ class RegistrationControllerTest {
   void verifyUserAccount_WithExpiredToken_Status400_AssertTokenRemovedAndUserWasNotActivated()
     throws Exception {
     String uri = GENERATE_TOKEN;
-    MvcResult mvcResult = mvc
+    mvc
       .perform(
         MockMvcRequestBuilders
           .post(uri)
@@ -512,16 +531,11 @@ class RegistrationControllerTest {
       .andExpect(
         content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON)
       )
-      .andExpect(MockMvcResultMatchers.jsonPath("$.token").exists())
-      .andReturn();
-    String token = mapper
-      .readTree(mvcResult.getResponse().getContentAsString())
-      .get("token")
-      .asText();
+      .andExpect(MockMvcResultMatchers.jsonPath("$.message").exists());
 
     // Expire the token by one day
     VerificationToken verificationToken = verificationTokenRepository
-      .findByToken(token)
+      .findByUser(userRepository.findByUsername("BSimpson").orElseThrow(UsernameDoesNotExist::new))
       .get();
     verificationToken.setExpiryDate(
       LocalDateTime.now().minus(Duration.ofDays(1))
@@ -534,7 +548,7 @@ class RegistrationControllerTest {
         MockMvcRequestBuilders
           .post(uri)
           .accept(MediaType.APPLICATION_JSON)
-          .content("{\"token\":\"" + token + "\"}")
+          .content("{\"token\":\"" + verificationToken.getToken() + "\"}")
           .contentType(MediaType.APPLICATION_JSON)
       )
       .andExpect(status().isBadRequest());
